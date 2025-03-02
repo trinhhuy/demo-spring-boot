@@ -7,6 +7,7 @@ import org.springframework.stereotype.Component;
 import java.security.Key;
 import java.util.Date;
 
+@Component
 public class JwtUtil {
     private static final String SECRET_KEY = "your-secret-key-your-secret-key"; // Thay bằng key mạnh hơn
     private static final long EXPIRATION_TIME = 86400000;
