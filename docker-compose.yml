@@ -16,7 +16,7 @@ services:
       - mysql_data:/var/lib/mysql
 
   app:
-    image: openjdk:17-jdk-slim  # Chạy trực tiếp với JDK, không cần build image
+    image: openjdk:21-jdk-slim  # Chạy trực tiếp với JDK, không cần build image
     container_name: spring_app
     restart: always
     working_dir: /app
