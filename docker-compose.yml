@@ -13,35 +13,42 @@ services:
     ports:
       - "3306:3306"
     volumes:
-      - mysql_data:/var/lib/mysql
+      - ./mysql_data:/var/lib/mysql
     networks:
       - app-network
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      retries: 5
+      start_period: 20s
+      timeout: 5s
 
   app:
-    image: openjdk:21-jdk-slim  # Chạy trực tiếp với JDK, không cần build image
+    image: openjdk:21-jdk-slim
     container_name: spring_app
     restart: always
     working_dir: /app
     volumes:
-      - .:/app  # Mount thư mục code vào container
+      - .:/app
+      - ./logs:/app/logs
     ports:
       - "8080:8080"
-    command: ["./mvnw", "spring-boot:run"]  # Chạy trực tiếp Spring Boot từ source code
+    command: ["/bin/sh", "-c", "cd /app && ./mvnw spring-boot:run"]
     depends_on:
-      - mysql
-      - otel-collector
+      mysql:
+        condition: service_healthy
+      otel-collector:
+        condition: service_started
     environment:
       SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/book_db
       SPRING_DATASOURCE_USERNAME: user
       SPRING_DATASOURCE_PASSWORD: password
       SPRING_JPA_HIBERNATE_DDL_AUTO: update
-      # OpenTelemetry configuration - pointing to the collector service
       MANAGEMENT_OTLP_METRICS_EXPORT_URL: http://otel-collector:4318/v1/metrics
       MANAGEMENT_OTLP_TRACING_ENDPOINT: http://otel-collector:4318/v1/traces
     networks:
       - app-network
 
-  # OpenTelemetry Collector
   otel-collector:
     image: otel/opentelemetry-collector-contrib:latest
     container_name: otel_collector
@@ -50,14 +57,13 @@ services:
     volumes:
       - ./otel-config/config.yaml:/etc/otelcol/config.yaml
     ports:
-      - "4319:4317"  # Changed from 4317:4317
-      - "4320:4318"  # Changed from 4318:4318
+      - "4317:4317"  # Exposed to host (no conflict)
+      - "4318:4318"  # Exposed to host (no conflict)
       - "8889:8889"  # Prometheus exporter
       - "8888:8888"  # Collector's own metrics
     networks:
       - app-network
 
-  # Prometheus for metrics collection
   prometheus:
     image: prom/prometheus:latest
     container_name: prometheus
@@ -71,7 +77,6 @@ services:
     networks:
       - app-network
 
-  # Grafana for visualization (optional but recommended)
   grafana:
     image: grafana/grafana:latest
     container_name: grafana
@@ -79,7 +84,8 @@ services:
     ports:
       - "3000:3000"
     environment:
-      - GF_SECURITY_ADMIN_PASSWORD=admin
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=supersecurepassword
       - GF_USERS_ALLOW_SIGN_UP=false
     volumes:
       - grafana_data:/var/lib/grafana
@@ -89,24 +95,24 @@ services:
     networks:
       - app-network
 
-  # Tempo for distributed tracing
   tempo:
     image: grafana/tempo:latest
     container_name: tempo
-    command: [ "-config.file=/etc/tempo.yaml", "-server.grpc_listen_address=0.0.0.0" ]
+    command: [ "-config.file=/etc/tempo.yaml"]
     volumes:
       - ./tempo/tempo.yaml:/etc/tempo.yaml
       - tempo_data:/tmp/tempo
     ports:
-      - "3200:3200"  # tempo
-      - "4317:4317"  # otlp grpc
-      - "4318:4318"  # otlp http
+      - "3200:3200"  # Tempo UI on host (no conflict)
+      - "50051:4317"  # Host port changed, internal still 4317 (OTLP gRPC)
+      - "50052:4318"  # Host port changed, internal still 4318 (OTLP HTTP)
     networks:
       - app-network
-    user: "0"  # Run as root to avoid permission issues
+    user: "0"
 
 networks:
   app-network:
+    name: app-network
     driver: bridge
 
 volumes:
