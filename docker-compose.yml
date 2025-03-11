@@ -61,6 +61,8 @@ services:
       - "4318:4318"  # Exposed to host (no conflict)
       - "8889:8889"  # Prometheus exporter
       - "8888:8888"  # Collector's own metrics
+    depends_on:
+      - tempo
     networks:
       - app-network
 
@@ -68,6 +70,10 @@ services:
     image: prom/prometheus:latest
     container_name: prometheus
     restart: always
+    command:
+      - "--config.file=/etc/prometheus/prometheus.yml"
+      - "--web.enable-remote-write-receiver"
+      - "--enable-feature=native-histograms"
     volumes:
       - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
     ports:
