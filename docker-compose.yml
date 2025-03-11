@@ -14,6 +14,8 @@ services:
       - "3306:3306"
     volumes:
       - mysql_data:/var/lib/mysql
+    networks:
+      - app-network
 
   app:
     image: openjdk:21-jdk-slim  # Chạy trực tiếp với JDK, không cần build image
@@ -27,11 +29,69 @@ services:
     command: ["./mvnw", "spring-boot:run"]  # Chạy trực tiếp Spring Boot từ source code
     depends_on:
       - mysql
+      - otel-collector
     environment:
       SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/book_db
       SPRING_DATASOURCE_USERNAME: user
       SPRING_DATASOURCE_PASSWORD: password
       SPRING_JPA_HIBERNATE_DDL_AUTO: update
+      # OpenTelemetry configuration - pointing to the collector service
+      MANAGEMENT_OTLP_METRICS_EXPORT_URL: http://otel-collector:4318/v1/metrics
+      MANAGEMENT_OTLP_TRACING_ENDPOINT: http://otel-collector:4318/v1/traces
+    networks:
+      - app-network
+
+  # OpenTelemetry Collector
+  otel-collector:
+    image: otel/opentelemetry-collector-contrib:latest
+    container_name: otel_collector
+    restart: always
+    command: ["--config=/etc/otelcol/config.yaml"]
+    volumes:
+      - ./otel-config/config.yaml:/etc/otelcol/config.yaml
+    ports:
+      - "4317:4317"  # gRPC receiver
+      - "4318:4318"  # HTTP receiver
+      - "8889:8889"  # Prometheus exporter
+      - "8888:8888"  # Collector's own metrics
+    networks:
+      - app-network
+
+  # Prometheus for metrics collection
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: prometheus
+    restart: always
+    volumes:
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+    ports:
+      - "9090:9090"
+    depends_on:
+      - otel-collector
+    networks:
+      - app-network
+
+  # Grafana for visualization (optional but recommended)
+  grafana:
+    image: grafana/grafana:latest
+    container_name: grafana
+    restart: always
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+      - GF_USERS_ALLOW_SIGN_UP=false
+    volumes:
+      - grafana_data:/var/lib/grafana
+    depends_on:
+      - prometheus
+    networks:
+      - app-network
+
+networks:
+  app-network:
+    driver: bridge
 
 volumes:
   mysql_data:
+  grafana_data:
