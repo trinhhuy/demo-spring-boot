@@ -19,6 +19,10 @@ exporters:
     metric_expiration: 180m
   debug:
     verbosity: detailed
+  otlp:
+    endpoint: tempo:4317
+    tls:
+      insecure: true
 
 service:
   telemetry:
@@ -36,4 +40,4 @@ service:
     traces:
       receivers: [otlp]
       processors: [batch]
-      exporters: [debug]
+      exporters: [otlp, debug]
