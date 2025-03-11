@@ -1,6 +1,9 @@
 package com.example.demo.config;
 
 import com.example.demo.security.JwtFilter;
+import io.swagger.v3.oas.models.Components;
+import io.swagger.v3.oas.models.OpenAPI;
+import io.swagger.v3.oas.models.security.SecurityScheme;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -30,7 +33,15 @@ public class SecurityConfig {
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-        String[] publicEndpoints = { "/api/auth/login", "/api/auth/register", "/api/auth/logout" };
+        String[] publicEndpoints = { "/api/auth/login", "/api/auth/register", "/api/auth/logout" ,
+                "/v3/api-docs/**",
+                "/v3/api-docs.yaml",
+
+                "/v3/api-docs",
+                "/v3/api-docs/**",
+
+                "/swagger-ui/**",
+                "/swagger-ui.html"};
         http.csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(publicEndpoints).permitAll()
@@ -39,5 +50,20 @@ public class SecurityConfig {
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .addFilterBefore(jwtFilter(), UsernamePasswordAuthenticationFilter.class);
         return http.build();
+    }
+
+    @Bean
+    public OpenAPI customOpenAPI() {
+        return new OpenAPI()
+                .components(
+                        new Components()
+                                .addSecuritySchemes(
+                                        "bearer-key",
+                                        new SecurityScheme()
+                                                .type(SecurityScheme.Type.HTTP)
+                                                .scheme("bearer")
+                                                .bearerFormat("JWT")
+                                )
+                );
     }
 }
