@@ -11,7 +11,6 @@ import com.example.demo.dto.RegisterRequest;
 import com.example.demo.security.JwtUtil;
 import com.example.demo.services.App1Service;
 import com.example.demo.services.UserService;
-
 @RestController
 @RequestMapping("/api/auth")
 public class AuthController {

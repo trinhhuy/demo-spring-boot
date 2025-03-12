@@ -1,10 +1,7 @@
 package com.example.demo.controllers;
 
 import java.util.concurrent.CompletableFuture;
-import lombok.extern.slf4j.Slf4j;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -15,7 +12,6 @@ import com.example.demo.services.App1Service;
 import com.example.demo.services.AsyncApp1Service;
 import com.example.demo.services.ReactiveApp1Service;
 
-@Slf4j
 @RestController
 @RequestMapping("/api/test")
 public class TestController {
@@ -30,8 +26,10 @@ public class TestController {
 
     @PostMapping("/sync")
     public String sync() {
-        log.info("abc calling");
-        return "Response from app1: " + app1Service.getHelloFromApp1();
+//        log.info("Starting sync call to app1");
+        String response = app1Service.getHelloFromApp1();
+//        log.info("Completed sync call to app1 with response: {}", response);
+        return "Response from app1: " + response;
     }
 
     @GetMapping("/call-app1-async")

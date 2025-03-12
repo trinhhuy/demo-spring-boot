@@ -12,3 +12,9 @@ spring:
     properties:
       hibernate:
         dialect: org.hibernate.dialect.MySQL8Dialect
+
+#logging:
+#  level:
+##    com.example.demo: TRACE
+#    org.springframework.web: TRACE
+##    org.springframework.web.servlet.DispatcherServlet: DEBUG
