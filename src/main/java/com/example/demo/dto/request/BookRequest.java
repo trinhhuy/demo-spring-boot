@@ -5,7 +5,7 @@ import jakarta.validation.constraints.NotBlank;
 import lombok.Data;
 
 @Data
-@Schema(name = "Request DTO", description = "Book Request DTO")
+@Schema(name = "Book Request DTO", description = "Book Request DTO")
 public class BookRequest {
 
     @Schema(description = "Title", example = "7 Habits")

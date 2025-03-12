@@ -8,7 +8,7 @@ import lombok.Data;
 @Data
 @AllArgsConstructor
 @JsonInclude(JsonInclude.Include.NON_NULL)
-@Schema(name = "Response DTO", description = "Book Response DTO")
+@Schema(name = "Book Response DTO", description = "Book Response DTO")
 public class BookResponse {
 
     @Schema(description = "ID", example = "1")

@@ -37,3 +37,14 @@
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
+# Swagger
+
+### Lỗi
+- do sử dụng Params: **@RequestHeader("Authorization") String token**
+  - Authorization param xuất hiện nhưng không được thêm vào request 
+  - => chưa xử lý được
+- Xử lý thay thế: **@Parameter(hidden = true)** 
+  - => Mục đích: Ẩn Authorization param
+- Hướng xử lý mong muốn: Bỏ **@RequestHeader("Authorization") String token**
+  - Vì trong trong context đã có UserDetails, không cần phải truyền từ Controller, ta sẽ lấy trong Service
+  - => Kết hợp Sử dụng Authorize thay vì Authorization param

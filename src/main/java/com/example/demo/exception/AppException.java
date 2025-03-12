@@ -16,5 +16,4 @@ public class AppException extends RuntimeException {
     }
 
     ErrorCode errorCode;
-
 }
