@@ -1,43 +1,50 @@
+# OpenTelemetry Collector Configuration
+# This configuration defines how telemetry data is collected, processed and exported
+
 receivers:
   otlp:
     protocols:
       http:
-        endpoint: 0.0.0.0:4318
+        endpoint: 0.0.0.0:4318  # HTTP receiver for metrics and traces
       grpc:
-        endpoint: 0.0.0.0:4317
+        endpoint: 0.0.0.0:4317  # gRPC receiver for metrics and traces
 
 processors:
   batch:
-    timeout: 1s
-    send_batch_size: 1024
+    # Groups data into batches for more efficient processing
+    timeout: 1s                 # Send batch after this timeout even if not full
+    send_batch_size: 1024       # Maximum items per batch
 
 exporters:
   prometheus:
-    endpoint: 0.0.0.0:8889
-    namespace: demo
-    send_timestamps: true
-    metric_expiration: 180m
+    endpoint: 0.0.0.0:8889      # Prometheus metrics exposure endpoint
+    namespace: my-demo-app-1     # Prefix for all metrics names
+    send_timestamps: true       # Include timestamp metadata with metrics
+    metric_expiration: 180m     # Keep metrics for 3 hours after last update
   debug:
-    verbosity: detailed
+    verbosity: detailed         # Detailed debug output for troubleshooting
   otlp:
-    endpoint: tempo:4317
+    endpoint: tempo:4317        # Send traces to Tempo service
     tls:
-      insecure: true
+      insecure: true            # WARNING: Insecure mode disables TLS verification
+                                # Only use for development environments
 
 service:
   telemetry:
     metrics:
-      level: detailed
-      address: 0.0.0.0:8888
+      level: detailed           # Collector's own metrics verbosity
+      address: 0.0.0.0:8888     # Endpoint for collector's internal metrics
     logs:
-      level: debug
+      level: debug              # Verbose logging level for troubleshooting
   
   pipelines:
     metrics:
-      receivers: [otlp]
-      processors: [batch]
-      exporters: [prometheus, debug]
+      # Metrics processing pipeline
+      receivers: [otlp]         # Get metrics from OTLP receiver
+      processors: [batch]       # Batch metrics for efficiency
+      exporters: [prometheus, debug]  # Send to Prometheus and debug output
     traces:
-      receivers: [otlp]
-      processors: [batch]
-      exporters: [otlp, debug]
+      # Traces processing pipeline
+      receivers: [otlp]         # Get traces from OTLP receiver
+      processors: [batch]       # Batch traces for efficiency
+      exporters: [otlp, debug]  # Send to Tempo and debug output
