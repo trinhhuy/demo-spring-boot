@@ -1,7 +1,8 @@
 package com.example.demo.exception;
 
+import com.example.demo.dto.response.AppResponse;
+import com.example.demo.dto.response.ResponseUtils;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.*;
@@ -11,24 +12,21 @@ import org.springframework.web.bind.annotation.*;
 public class GlobalExceptionHandler {
 
     @ExceptionHandler(AppException.class)
-    public ResponseEntity<Void> handleAppException(AppException ex) {
-        log.info("Handling AppException: " + ex.getMessage());
-        return ResponseEntity.status(ex.getErrorCode().getStatusCode())
-                .build();
+    public ResponseEntity<AppResponse<Void>> handleAppException(AppException ex) {
+        log.info("Handling AppException: {}", ex.getMessage());
+        return ResponseUtils.error(ex);
     }
 
     @ExceptionHandler(RuntimeException.class)
-    public ResponseEntity<Void> handleRuntimeException(RuntimeException ex) {
-        log.info("Handling RuntimeException: " + ex.getMessage());
-        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .build();
+    public ResponseEntity<AppResponse<Void>> handleRuntimeException(RuntimeException ex) {
+        log.info("Handling RuntimeException: {}", ex.getMessage());
+        return ResponseUtils.error(new AppException(ErrorCode.UNCATEGORIZED_EXCEPTION));
     }
 
     @ExceptionHandler(Exception.class)
-    public ResponseEntity<Void> handleException(Exception ex) {
-        log.info("Handling Exception: " + ex.getMessage());
-        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .build();
+    public ResponseEntity<AppResponse<Void>> handleException(Exception ex) {
+        log.info("Handling Exception: {}",  ex.getMessage());
+        return ResponseUtils.error(new AppException(ErrorCode.UNCATEGORIZED_EXCEPTION));
     }
 
 }
