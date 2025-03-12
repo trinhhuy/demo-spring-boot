@@ -8,32 +8,34 @@ import com.example.demo.mapper.BookMapper;
 import com.example.demo.models.Book;
 import com.example.demo.models.User;
 import com.example.demo.repositories.BookRepository;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.AccessLevel;
+import lombok.RequiredArgsConstructor;
+import lombok.experimental.FieldDefaults;
 import org.springframework.data.domain.*;
 import org.springframework.stereotype.Service;
 import com.example.demo.repositories.UserRepository;
 import com.example.demo.security.JwtUtil;
 
 @Service
+@RequiredArgsConstructor
+@FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 public class BookService {
 
     private static final int MAX_PAGE_SIZE = 5; // Giới hạn kích thước trang
 
-    @Autowired
+    UserService userService;
+
     private BookMapper mapper;
 
-    @Autowired
     private BookRepository bookRepository;
 
-    @Autowired
     private UserRepository userRepository;
 
-    @Autowired
     private JwtUtil jwtUtil;
 
-    public Page<BookResponse> getUserBooks(String token, Pageable pageable) {
+    public Page<BookResponse> getUserBooks(Pageable pageable) {
         // Giới hạn kích thước trang
-        if (pageable.getPageSize() > MAX_PAGE_SIZE) {
+        if (pageable != null && pageable.getPageSize() > MAX_PAGE_SIZE) {
             pageable = PageRequest.of(
                     pageable.getPageNumber(),
                     MAX_PAGE_SIZE,
@@ -41,8 +43,7 @@ public class BookService {
             );
         }
 
-        String username = jwtUtil.validateToken(token);
-        User user = userRepository.findByUsername(username).orElseThrow();
+        User user = userService.getCurrentUser();
         Page<Book> books = bookRepository.findByUser(user, pageable);
 
         return books.map(book -> new BookResponse(
@@ -52,9 +53,8 @@ public class BookService {
         ));
     }
 
-    public BookResponse addBook(String token, BookRequest bookRequest) {
-        String username = jwtUtil.validateToken(token);
-        User user = userRepository.findByUsername(username).orElseThrow();
+    public BookResponse addBook(BookRequest bookRequest) {
+        User user = userService.getCurrentUser();
 
         Book book = mapper.toBook(bookRequest);
         book.setUser(user);
@@ -68,9 +68,8 @@ public class BookService {
         );
     }
 
-    public BookResponse getBookById(String token, Long id) {
-        String username = jwtUtil.validateToken(token);
-        User user = userRepository.findByUsername(username).orElseThrow();
+    public BookResponse getBookById(Long id) {
+        User user = userService.getCurrentUser();
 
         Book book = bookRepository.findByIdAndUser(id, user).orElse(null);
 
@@ -80,9 +79,8 @@ public class BookService {
         return mapper.toBookResponse(book);
     }
 
-    public BookResponse updateBook(String token, BookRequest bookRequest, Long id) {
-        String username = jwtUtil.validateToken(token);
-        User user = userRepository.findByUsername(username).orElseThrow();
+    public BookResponse updateBook(BookRequest bookRequest, Long id) {
+        User user = userService.getCurrentUser();
 
         if (!bookRepository.existsByIdAndUser(id, user)) {
             throw new AppException(ErrorCode.UNAUTHORIZED);
@@ -100,9 +98,8 @@ public class BookService {
         return mapper.toBookResponse(book);
     }
 
-    public void deleteBook(String token, Long id) {
-        String username = jwtUtil.validateToken(token);
-        User user = userRepository.findByUsername(username).orElseThrow();
+    public void deleteBook(Long id) {
+        User user = userService.getCurrentUser();
 
         Book book = bookRepository.findByIdAndUser(id, user).orElseThrow();
 

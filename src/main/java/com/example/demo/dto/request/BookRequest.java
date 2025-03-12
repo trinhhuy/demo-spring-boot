@@ -1,12 +1,19 @@
 package com.example.demo.dto.request;
 
+import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.constraints.NotBlank;
 import lombok.Data;
 
 @Data
+@Schema(name = "Request DTO", description = "Book Request DTO")
 public class BookRequest {
 
-//    @NotBlank(message = "Title is required")
+    @Schema(description = "Title", example = "7 Habits")
+    @NotBlank(message = "Title is required")
     private String title;
-// @NotBlank(message = "Author is required")
+
+
+    @Schema(description = "Author", example = "Salmon Odin")
+    @NotBlank(message = "Author is required")
     private String author;
 }

@@ -31,4 +31,8 @@ springdoc:
     path: /v3/api-docs
   swagger-ui:
     path: /swagger-ui.html
-
+    persistAuthorization: true  # Giữ token khi refresh trang
+#    tryItOutEnabled: true  # Bật chế độ "Try it now"
+#    add-authorization-header: false  # Tự động thêm Authorization vào request
+#    default-consumes-media-type: application/json
+#    default-produces-media-type: application/json

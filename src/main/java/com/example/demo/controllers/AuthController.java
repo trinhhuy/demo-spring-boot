@@ -5,18 +5,20 @@ import com.example.demo.dto.RegisterRequest;
 import com.example.demo.models.User;
 import com.example.demo.security.JwtUtil;
 import com.example.demo.services.UserService;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.AccessLevel;
+import lombok.RequiredArgsConstructor;
+import lombok.experimental.FieldDefaults;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/auth")
+@RequiredArgsConstructor
+@FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 public class AuthController {
-    @Autowired
-    private UserService userService;
-
-    @Autowired
-    private JwtUtil jwtUtil;
+    
+    UserService userService;
+    JwtUtil jwtUtil;
 
     @PostMapping("/register")
     public String register(@RequestBody RegisterRequest request) {
@@ -28,10 +30,9 @@ public class AuthController {
         return jwtUtil.generateToken(request.getUsername());
     }
 
-
     @GetMapping("/info")
     public User info() {
-        return userService.getCurrentUsername();
+        return userService.getCurrentUser();
     }
 
     @GetMapping("/details")
