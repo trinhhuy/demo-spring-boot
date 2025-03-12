@@ -20,4 +20,11 @@ public class AsyncApp1Service {
         String result = restTemplate.getForObject("http://spring-app-1:8081/hello-async", String.class);
         return CompletableFuture.completedFuture(result);
     }
+
+    @Async
+    public void fireAndForget() {
+        // This runs in background, response is ignored
+        restTemplate.getForObject("http://spring-app-1:8081/hello", String.class);
+        // Method returns void, no waiting
+    }
 }

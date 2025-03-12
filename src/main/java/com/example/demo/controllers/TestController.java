@@ -10,6 +10,8 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.example.demo.services.App1Service;
 import com.example.demo.services.AsyncApp1Service;
+import com.example.demo.services.ReactiveApp1Service;
+
 @RestController
 @RequestMapping("/api/test")
 public class TestController {
@@ -17,10 +19,13 @@ public class TestController {
     private App1Service app1Service;
 
     @Autowired
+    private ReactiveApp1Service reactiveApp1Service;
+
+    @Autowired
     private AsyncApp1Service asyncApp1Service;
 
     @PostMapping("/sync")
-    public String register() {
+    public String sync() {
         return "Response from app1: " + app1Service.getHelloFromApp1();
     }
 
@@ -28,5 +33,14 @@ public class TestController {
     public CompletableFuture<String> callApp1Async() {
         return asyncApp1Service.callApp1Async()
                 .thenApply(response -> "Async response from app1: " + response);
+    }
+
+    @GetMapping("/fire-forget")
+    public String fireAndForget() {
+        // Start the async task but don't wait for it
+        // asyncApp1Service.fireAndForget();
+        reactiveApp1Service.fireAndForgetReactive();
+        // Return immediately
+        return "Request initiated, not waiting for result";
     }
 }

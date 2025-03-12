@@ -26,9 +26,7 @@ public class AuthController {
 
     @PostMapping("/register")
     public String register(@RequestBody RegisterRequest request) {
-        // return "xxxx";
-        return "Response from app1: " + app1Service.getHelloFromApp1();
-        // return userService.register(request);
+        return userService.register(request);
     }
 
     @PostMapping("/login")
