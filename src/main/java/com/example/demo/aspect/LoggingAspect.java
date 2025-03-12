@@ -1,48 +1,50 @@
 package com.example.demo.aspect;
 
-import org.aspectj.lang.JoinPoint;
-import org.aspectj.lang.annotation.AfterReturning;
-import org.aspectj.lang.annotation.Aspect;
-import org.aspectj.lang.annotation.Before;
-import org.aspectj.lang.annotation.Pointcut;
-import org.slf4j.MDC;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
+import com.example.demo.config.TraceIdConfig;
 import com.example.demo.services.LoggingService;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import org.aspectj.lang.ProceedingJoinPoint;
+import org.aspectj.lang.annotation.Around;
+import org.aspectj.lang.annotation.Aspect;
+import org.slf4j.MDC;
+import org.springframework.stereotype.Component;
 
 @Aspect
 @Component
 public class LoggingAspect {
+    private final LoggingService loggingService;
+    private final ObjectMapper objectMapper = new ObjectMapper();
 
-    @Autowired
-    private LoggingService loggingService;
-
-    @Pointcut("within(@org.springframework.stereotype.Controller *)")
-    public void controller() {}
-
-    @Before("controller()")
-    public void logBefore(JoinPoint joinPoint) {
-        String traceId = generateTraceId(); // Implement this method to generate a unique traceId
-        String controllerName = joinPoint.getSignature().getDeclaringTypeName();
-        String methodName = joinPoint.getSignature().getName();
-
-        MDC.put("traceId", traceId);
-        MDC.put("controller", controllerName);
-        MDC.put("function", methodName);
-
-        loggingService.log("Entering method", joinPoint.getArgs());
+    public LoggingAspect(LoggingService loggingService) {
+        this.loggingService = loggingService;
     }
 
-    @AfterReturning(pointcut = "controller()", returning = "result")
-    public void logAfter(JoinPoint joinPoint, Object result) {
-        loggingService.log("Exiting method", result);
+    @Around("execution(* com.example.demo.controllers..*.*(..))")
+    public Object logAround(ProceedingJoinPoint joinPoint) throws Throwable {
+        try {
+            TraceIdConfig.setTraceId();
 
-        // Clear MDC after request is complete
-        MDC.clear();
-    }
+            String className = joinPoint.getSignature().getDeclaringTypeName();
+            String methodName = joinPoint.getSignature().getName();
 
-    private String generateTraceId() {
-        // Implement logic to generate a unique traceId
-        return java.util.UUID.randomUUID().toString();
+            // Thêm controller và method name vào MDC
+            MDC.put("controller", className);
+            MDC.put("method", methodName);
+
+            // Log request
+            Object[] args = joinPoint.getArgs();
+            String requestData = args.length > 0 ? objectMapper.writeValueAsString(args) : "no data";
+            loggingService.log("Enter: {}.{}", className, methodName, requestData);
+
+            Object result = joinPoint.proceed();
+
+            // Log response
+            String responseData = result != null ? objectMapper.writeValueAsString(result) : "void";
+            loggingService.log("Exit: {}.{}", className, methodName, responseData);
+            
+            return result;
+        } finally {
+            MDC.clear();
+        }
     }
 }

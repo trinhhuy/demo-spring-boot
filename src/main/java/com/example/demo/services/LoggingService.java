@@ -10,18 +10,27 @@ public class LoggingService {
 
     private static final Logger logger = LoggerFactory.getLogger(LoggingService.class);
 
-    public void log(String message, Object data) {
-        String traceId = MDC.get("traceId");
-        String controller = MDC.get("controller");
-        String function = MDC.get("function");
+    public void log(String message, Object... args) {
+        if (args != null && args.length > 0) {
+            logger.info(message + " - Data: {}", args);
+        } else {
+            logger.info(message);
+        }
+    }
 
-        MDC.put("message", message);
-        MDC.put("data", data != null ? data.toString() : "null");
+    public void logInfo(String message) {
+        logger.info(message);
+    }
 
-        logger.info("Log: traceId={}, controller={}, function={}, message={}, data={}",
-                traceId, controller, function, message, data);
+    public void logError(String message) {
+        logger.error(message);
+    }
 
-        MDC.remove("message");
-        MDC.remove("data");
+    public void logWarn(String message) {
+        logger.warn(message);
+    }
+
+    public void logDebug(String message) {
+        logger.debug(message);
     }
 }

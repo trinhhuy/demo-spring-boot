@@ -2,6 +2,8 @@ package com.example.demo.controllers;
 
 import java.util.concurrent.CompletableFuture;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -15,6 +17,8 @@ import com.example.demo.services.ReactiveApp1Service;
 @RestController
 @RequestMapping("/api/test")
 public class TestController {
+    private static final Logger logger = LoggerFactory.getLogger(TestController.class);
+
     @Autowired
     private App1Service app1Service;
 
@@ -45,5 +49,14 @@ public class TestController {
         reactiveApp1Service.fireAndForgetReactive();
         // Return immediately
         return "Request initiated, not waiting for result";
+    }
+
+    @GetMapping("/test")
+    public String test() {
+        logger.debug("Debug log message");
+        logger.info("Info log message");
+        logger.warn("Warning log message");
+        logger.error("Error log message");
+        return "Test logging";
     }
 }
