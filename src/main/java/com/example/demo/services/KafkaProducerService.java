@@ -1,4 +1,3 @@
-// src/main/java/com/example/demo/service/KafkaProducerService.java
 package com.example.demo.service;
 
 import org.slf4j.Logger;
@@ -17,10 +16,12 @@ public class KafkaProducerService {
     
     public void sendMessage(String message) {
         log.info("Sending message to Kafka: {}", message);
+        
         kafkaTemplate.send(TOPIC, message)
             .whenComplete((result, ex) -> {
                 if (ex == null) {
-                    log.info("Message sent successfully to topic {}", TOPIC);
+                    log.info("Message sent to topic {} with offset {}", 
+                        TOPIC, result.getRecordMetadata().offset());
                 } else {
                     log.error("Failed to send message to Kafka", ex);
                 }
