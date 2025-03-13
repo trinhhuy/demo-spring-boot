@@ -30,11 +30,7 @@ public class AuthController {
 
     @PostMapping("/register")
     public String register(@RequestBody RegisterRequest request) {
-        loggingService.logInfo("Bắt đầu xử lý đăng ký cho user: " + request.getUsername());
-        
         String result = userService.register(request);
-        
-        loggingService.logInfo("Hoàn thành đăng ký user: " + request.getUsername());
         return result;
     }
 
