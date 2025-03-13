@@ -13,11 +13,13 @@ import org.springframework.web.bind.annotation.RestController;
 import com.example.demo.services.App1Service;
 import com.example.demo.services.AsyncApp1Service;
 import com.example.demo.services.ReactiveApp1Service;
+import com.example.demo.services.LoggingService;
 
 @RestController
 @RequestMapping("/api/test")
 public class TestController {
-    private static final Logger logger = LoggerFactory.getLogger(TestController.class);
+    @Autowired
+    private LoggingService loggingService;
 
     @Autowired
     private App1Service app1Service;
@@ -38,8 +40,13 @@ public class TestController {
 
     @GetMapping("/call-app1-async")
     public CompletableFuture<String> callApp1Async() {
+        loggingService.logInfo("before calling");
+
         return asyncApp1Service.callApp1Async()
-                .thenApply(response -> "Async response from app1: " + response);
+                .thenApply(response -> {
+                    loggingService.logInfo("Received async response xxxxxxxxxx---");
+                    return "Async response from app1: " + response;
+                });
     }
 
     @GetMapping("/fire-forget")
@@ -51,12 +58,12 @@ public class TestController {
         return "Request initiated, not waiting for result";
     }
 
-    @GetMapping("/test")
-    public String test() {
-        logger.debug("Debug log message");
-        logger.info("Info log message");
-        logger.warn("Warning log message");
-        logger.error("Error log message");
-        return "Test logging";
-    }
+    // @GetMapping("/test")
+    // public String test() {
+    //     logger.debug("Debug log message");
+    //     logger.info("Info log message");
+    //     logger.warn("Warning log message");
+    //     logger.error("Error log message");
+    //     return "Test logging";
+    // }
 }
