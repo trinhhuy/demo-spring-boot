@@ -1,7 +1,6 @@
 package com.example.demo.controllers;
 
 import java.util.concurrent.CompletableFuture;
-import lombok.extern.slf4j.Slf4j;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -15,10 +14,11 @@ import com.example.demo.services.App1Service;
 import com.example.demo.services.AsyncApp1Service;
 import com.example.demo.services.ReactiveApp1Service;
 
-@Slf4j
 @RestController
 @RequestMapping("/api/test")
 public class TestController {
+    private static final Logger logger = LoggerFactory.getLogger(TestController.class);
+
     @Autowired
     private App1Service app1Service;
 
@@ -30,8 +30,10 @@ public class TestController {
 
     @PostMapping("/sync")
     public String sync() {
-        log.info("abc calling");
-        return "Response from app1: " + app1Service.getHelloFromApp1();
+//        log.info("Starting sync call to app1");
+        String response = app1Service.getHelloFromApp1();
+//        log.info("Completed sync call to app1 with response: {}", response);
+        return "Response from app1: " + response;
     }
 
     @GetMapping("/call-app1-async")
@@ -47,5 +49,14 @@ public class TestController {
         reactiveApp1Service.fireAndForgetReactive();
         // Return immediately
         return "Request initiated, not waiting for result";
+    }
+
+    @GetMapping("/test")
+    public String test() {
+        logger.debug("Debug log message");
+        logger.info("Info log message");
+        logger.warn("Warning log message");
+        logger.error("Error log message");
+        return "Test logging";
     }
 }

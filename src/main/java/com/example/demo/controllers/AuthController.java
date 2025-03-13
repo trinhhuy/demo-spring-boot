@@ -11,6 +11,7 @@ import com.example.demo.dto.RegisterRequest;
 import com.example.demo.security.JwtUtil;
 import com.example.demo.services.App1Service;
 import com.example.demo.services.UserService;
+import com.example.demo.services.LoggingService;
 
 @RestController
 @RequestMapping("/api/auth")
@@ -23,14 +24,27 @@ public class AuthController {
 
     @Autowired
     private JwtUtil jwtUtil;
+    
+    @Autowired
+    private LoggingService loggingService;
 
     @PostMapping("/register")
     public String register(@RequestBody RegisterRequest request) {
-        return userService.register(request);
+        loggingService.logInfo("Bắt đầu xử lý đăng ký cho user: " + request.getUsername());
+        
+        String result = userService.register(request);
+        
+        loggingService.logInfo("Hoàn thành đăng ký user: " + request.getUsername());
+        return result;
     }
 
     @PostMapping("/login")
     public String login(@RequestBody LoginRequest request) {
-        return jwtUtil.generateToken(request.getUsername());
+        loggingService.logInfo("Bắt đầu xử lý đăng nhập cho user: " + request.getUsername());
+        
+        String token = jwtUtil.generateToken(request.getUsername());
+        
+        loggingService.logInfo("Đã tạo token cho user: " + request.getUsername());
+        return token;
     }
 }

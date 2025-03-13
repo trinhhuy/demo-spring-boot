@@ -12,3 +12,13 @@ spring:
     properties:
       hibernate:
         dialect: org.hibernate.dialect.MySQL8Dialect
+  aop:
+    auto: true
+    proxy-target-class: true
+
+logging:
+  level:
+    com.example.demo: DEBUG
+    org.springframework.web: INFO
+  file:
+    path: logs/
