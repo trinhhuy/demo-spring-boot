@@ -20,5 +20,5 @@ logging:
   level:
     com.example.demo: DEBUG
     org.springframework.web: INFO
-  file:
-    path: logs/
+#  file:
+#    path: logs/

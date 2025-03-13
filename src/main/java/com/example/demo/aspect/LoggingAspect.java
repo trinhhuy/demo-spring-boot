@@ -9,6 +9,8 @@ import org.aspectj.lang.annotation.Aspect;
 import org.slf4j.MDC;
 import org.springframework.stereotype.Component;
 
+import java.util.concurrent.CompletableFuture;
+
 @Aspect
 @Component
 public class LoggingAspect {
@@ -22,8 +24,6 @@ public class LoggingAspect {
     @Around("execution(* com.example.demo.controllers..*.*(..))")
     public Object logAround(ProceedingJoinPoint joinPoint) throws Throwable {
         try {
-            TraceIdConfig.setTraceId();
-
             String className = joinPoint.getSignature().getDeclaringTypeName();
             String methodName = joinPoint.getSignature().getName();
 
@@ -38,7 +38,7 @@ public class LoggingAspect {
 
             Object result = joinPoint.proceed();
 
-            // Log response
+            // Log response cho các phương thức đồng bộ
             String responseData = result != null ? objectMapper.writeValueAsString(result) : "void";
             loggingService.log("Exit: {}.{}", className, methodName, responseData);
             

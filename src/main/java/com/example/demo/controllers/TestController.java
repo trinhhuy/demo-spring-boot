@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.slf4j.MDC;
 
 import com.example.demo.services.App1Service;
 import com.example.demo.services.AsyncApp1Service;
@@ -40,12 +41,18 @@ public class TestController {
 
     @GetMapping("/call-app1-async")
     public CompletableFuture<String> callApp1Async() {
+        String traceId = MDC.get("traceId");
         loggingService.logInfo("before calling");
 
         return asyncApp1Service.callApp1Async()
                 .thenApply(response -> {
-                    loggingService.logInfo("Received async response xxxxxxxxxx---");
-                    return "Async response from app1: " + response;
+                    try {
+                        MDC.put("traceId", traceId);
+                        loggingService.logInfo("Received async response xxxxxxxxxx---");
+                        return "Async response from app1: " + response;
+                    } finally {
+                        MDC.clear();
+                    }
                 });
     }
 
