@@ -55,6 +55,8 @@ services:
       OTEL_TRACES_EXPORTER: otlp
       OTEL_METRICS_EXPORTER: otlp
       OTEL_LOGS_EXPORTER: none
+      OTEL_INSTRUMENTATION_KAFKA_ENABLED: true
+      OTEL_INSTRUMENTATION_KAFKA_CLIENTS_ENABLED: true
     networks:
       - app-network
 
@@ -133,9 +135,10 @@ services:
     volumes:
       - ./app1:/app1
       - ./app1/logs:/app1/logs
+      - ./opentelemetry-javaagent.jar:/app1/opentelemetry-javaagent.jar
     ports:
       - "8081:8081"  # Different port from main app
-    command: ["/bin/sh", "-c", "cd /app1 && ./mvnw spring-boot:run -Dspring-boot.run.jvmArguments='-javaagent:/app/opentelemetry-javaagent.jar'"]
+    command: ["/bin/sh", "-c", "cd /app1 && ./mvnw spring-boot:run -Dspring-boot.run.jvmArguments='-javaagent:/app1/opentelemetry-javaagent.jar'"]
     depends_on:
       mysql:
         condition: service_healthy
@@ -157,6 +160,8 @@ services:
       OTEL_TRACES_EXPORTER: otlp
       OTEL_METRICS_EXPORTER: otlp
       OTEL_LOGS_EXPORTER: none
+      OTEL_INSTRUMENTATION_KAFKA_ENABLED: true
+      OTEL_INSTRUMENTATION_KAFKA_CLIENTS_ENABLED: true
     networks:
       - app-network
 

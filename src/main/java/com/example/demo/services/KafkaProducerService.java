@@ -6,24 +6,27 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 
+import com.example.demo.services.LoggingService;
+
 @Service
 public class KafkaProducerService {
-    private static final Logger log = LoggerFactory.getLogger(KafkaProducerService.class);
+    @Autowired
+    private LoggingService loggingService;
+
     private static final String TOPIC = "app-communication";
     
     @Autowired
     private KafkaTemplate<String, String> kafkaTemplate;
     
     public void sendMessage(String message) {
-        log.info("Sending message to Kafka: {}", message);
+        loggingService.logInfo("Sending message to Kafka: " + message);
         
         kafkaTemplate.send(TOPIC, message)
             .whenComplete((result, ex) -> {
                 if (ex == null) {
-                    log.info("Message sent to topic {} with offset {}", 
-                        TOPIC, result.getRecordMetadata().offset());
+                    loggingService.logInfo("Message test sent to topic " + TOPIC + " with offset " + result.getRecordMetadata().offset());
                 } else {
-                    log.error("Failed to send message to Kafka", ex);
+                    loggingService.logError("Failed to send message to Kafka" + ex.getMessage());
                 }
             });
     }

@@ -1,5 +1,5 @@
 // app1/src/main/java/com/example/demo/controller/KafkaResponseController.java
-package com.example.demo.controller;
+package com.example.demo.controllers;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
