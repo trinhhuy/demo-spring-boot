@@ -17,14 +17,14 @@ public class AsyncApp1Service {
     
     @Async
     public CompletableFuture<String> callApp1Async() {
-        String result = restTemplate.getForObject("http://spring-app-1:8081/hello-async", String.class);
+        String result = restTemplate.getForObject("http://spring-app-1:8081/api/hello-async", String.class);
         return CompletableFuture.completedFuture(result);
     }
 
     @Async
     public void fireAndForget() {
         // This runs in background, response is ignored
-        restTemplate.getForObject("http://spring-app-1:8081/hello", String.class);
+        restTemplate.getForObject("http://spring-app-1:8081/api/hello", String.class);
         // Method returns void, no waiting
     }
 }

@@ -6,12 +6,12 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 public class HelloController {
     
-    @GetMapping("/hello")
+    @GetMapping("/api/hello")
     public String hello() {
         return "Hello World";
     }
 
-    @GetMapping("/hello-async")
+    @GetMapping("/api/hello-async")
     public String helloAsync() {
         return "Hello World Async";
     }

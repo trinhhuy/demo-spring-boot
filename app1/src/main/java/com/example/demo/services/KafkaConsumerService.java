@@ -8,6 +8,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import io.micrometer.tracing.Tracer;
 import com.example.demo.repositories.BookRepository;
 import com.example.demo.models.Book;
+import io.opentelemetry.instrumentation.annotations.WithSpan;
 
 @Service
 public class KafkaConsumerService {
@@ -20,6 +21,7 @@ public class KafkaConsumerService {
     @Autowired
     private Tracer tracer;
     
+    @WithSpan("KafkaConsumerService.listen")
     @KafkaListener(topics = "app-communication", groupId = "${spring.kafka.consumer.group-id}")
     public void listen(String message) {
         // Log the trace context to verify it's being properly propagated
@@ -35,5 +37,7 @@ public class KafkaConsumerService {
         for (Book book : books) {
             log.info("Processing message: {}", book.getTitle());
         }
+
+        // throw new RuntimeException("Test exception");
     }
 }
