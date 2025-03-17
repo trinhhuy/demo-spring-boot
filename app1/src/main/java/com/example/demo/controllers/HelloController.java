@@ -15,4 +15,9 @@ public class HelloController {
     public String helloAsync() {
         return "Hello World Async";
     }
+
+    @GetMapping("/api/hello-async-error")
+    public String helloAsyncError() {
+        throw new RuntimeException("Hello World Async Error");
+    }
 }

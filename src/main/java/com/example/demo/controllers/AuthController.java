@@ -1,13 +1,12 @@
 package com.example.demo.controllers;
 
 import io.micrometer.core.instrument.Counter;
+import io.micrometer.core.instrument.Gauge;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Timer;
+
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import com.example.demo.dto.LoginRequest;
 import com.example.demo.dto.RegisterRequest;
@@ -15,6 +14,9 @@ import com.example.demo.security.JwtUtil;
 import com.example.demo.services.App1Service;
 import com.example.demo.services.UserService;
 import com.example.demo.services.LoggingService;
+
+import java.time.Duration;
+import java.util.concurrent.atomic.AtomicInteger;
 
 @RestController
 @RequestMapping("/api/auth")
@@ -31,66 +33,94 @@ public class AuthController {
     @Autowired
     private LoggingService loggingService;
     
-    // Add MeterRegistry for metrics
     private final MeterRegistry meterRegistry;
+    
+    // COUNTER - Increases monotonically
     private final Counter loginAttemptsCounter;
-    private final Counter registerAttemptsCounter;
-    private final Timer tokenGenerationTimer;
+    private final Counter failedLoginCounter;
+    
+    // GAUGE - Can go up and down, tracks current value
+    private final AtomicInteger activeLoginSessions = new AtomicInteger(0);
+    
+    // HISTOGRAM (implemented via Timer) - Measures distribution of values
+    private final Timer loginResponseTimeTimer;
     
     @Autowired
     public AuthController(MeterRegistry meterRegistry) {
         this.meterRegistry = meterRegistry;
         
-        // Login metrics
-        this.loginAttemptsCounter = Counter.builder("auth_login_attempts_total")
+        // COUNTER examples
+        this.loginAttemptsCounter = Counter.builder("auth.login.attempts.total")
             .description("Total number of login attempts")
             .register(meterRegistry);
             
-        // Registration metrics
-        this.registerAttemptsCounter = Counter.builder("auth_registration_attempts_total")
-            .description("Total number of registration attempts")
+        this.failedLoginCounter = Counter.builder("auth.login.failed.total")
+            .description("Total number of failed login attempts")
             .register(meterRegistry);
             
-        // Token generation timing
-        this.tokenGenerationTimer = Timer.builder("auth_token_generation_seconds")
-            .description("Time taken to generate authentication tokens")
+        // GAUGE example - tracks current active sessions
+        Gauge.builder("auth.sessions.active", activeLoginSessions, AtomicInteger::get)
+            .description("Number of currently active login sessions")
+            .register(meterRegistry);
+            
+        // HISTOGRAM example (via Timer with histogram statistics enabled)
+        this.loginResponseTimeTimer = Timer.builder("auth.login.duration")
+            .description("Distribution of login request processing times")
+            .publishPercentiles(0.5, 0.95, 0.99)  // Publish 50th, 95th, 99th percentiles
+            .publishPercentileHistogram()         // Enable histogram
+            .sla(
+                Duration.ofMillis(10),  // 10ms SLO bucket
+                Duration.ofMillis(50),  // 50ms SLO bucket
+                Duration.ofMillis(100)  // 100ms SLO bucket
+            )
             .register(meterRegistry);
     }
 
     @PostMapping("/register")
     public String register(@RequestBody RegisterRequest request) {
-        // Increment registration counter
-        registerAttemptsCounter.increment();
-        
-        // Tag-based counter for more detailed metrics
-        meterRegistry.counter("auth_operations", 
-            "operation", "register",
-            "username", request.getUsername())
-            .increment();
+        // COUNTER - Increment for each registration attempt
+        meterRegistry.counter("auth.register.attempts.total").increment();
         
         String result = userService.register(request);
+        
+        // COUNTER with tags - for successful registrations
+        meterRegistry.counter("auth.register.outcomes", 
+            "success", result.contains("success") ? "true" : "false").increment();
+        
         return result;
     }
 
     @PostMapping("/login")
     public String login(@RequestBody LoginRequest request) {
-        // Increment login counter
+        // COUNTER - Track total login attempts 
         loginAttemptsCounter.increment();
         
         loggingService.logInfo("Bắt đầu xử lý đăng nhập cho user: " + request.getUsername());
         
-        // Measure token generation time
-        return tokenGenerationTimer.record(() -> {
-            String token = jwtUtil.generateToken(request.getUsername());
-            
-            // Record login outcome
-            meterRegistry.counter("auth_login_outcomes", 
-                "outcome", "success",
-                "username", request.getUsername())
-                .increment();
+        // HISTOGRAM (via Timer) - Measure login response time
+        return loginResponseTimeTimer.record(() -> {
+            try {
+                // Simulate login processing
+                String token = jwtUtil.generateToken(request.getUsername());
                 
-            loggingService.logInfo("Đã tạo token cho user: " + request.getUsername());
-            return token;
+                // GAUGE - Increment active sessions on success
+                activeLoginSessions.incrementAndGet();
+                
+                loggingService.logInfo("Đã tạo token cho user: " + request.getUsername());
+                return token;
+            } catch (Exception e) {
+                // COUNTER - Track failed logins
+                failedLoginCounter.increment();
+                throw e;
+            }
         });
+    }
+    
+    @PostMapping("/logout")
+    public String logout(@RequestHeader("Authorization") String authHeader) {
+        // GAUGE - Decrement active sessions on logout
+        activeLoginSessions.decrementAndGet();
+        
+        return "Logged out successfully";
     }
 }

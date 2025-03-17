@@ -49,6 +49,15 @@ public class TestController {
                 });
     }
 
+    @GetMapping("/call-app1-async-error")
+    public CompletableFuture<String> callApp1AsyncError() {
+        return asyncApp1Service.callApp1AsyncError()
+                .thenApply(response -> {
+                    loggingService.logInfo("Received async response from app1 then return---");
+                    return "Async response from app1: " + response;
+                });
+    }
+    
     @GetMapping("/fire-forget")
     public String fireAndForget() {
         // Start the async task but don't wait for it

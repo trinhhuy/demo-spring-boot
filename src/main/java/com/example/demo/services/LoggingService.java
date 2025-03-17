@@ -22,6 +22,7 @@ public class LoggingService {
         if (args != null && args.length > 0) {
             try {
                 String jsonString = objectMapper.writeValueAsString(args);
+                // log header
                 String maskedData = bodyFilter.filter("application/json", jsonString);
                 logger.info(message + " - Data: {}", maskedData);
             } catch (JsonProcessingException e) {

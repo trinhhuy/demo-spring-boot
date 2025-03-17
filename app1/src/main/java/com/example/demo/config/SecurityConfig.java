@@ -40,6 +40,7 @@ public class SecurityConfig {
                         .requestMatchers("/actuator/**").permitAll()
                         .requestMatchers("/api/hello/**").permitAll()
                         .requestMatchers("/api/hello-async/**").permitAll()
+                        .requestMatchers("/api/hello-async-error/**").permitAll()
                         .anyRequest().authenticated()
                 )
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))

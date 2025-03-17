@@ -17,7 +17,7 @@ public class ReactiveApp1Service {
     public String fireAndForgetReactive() {
         // Spring Boot automatically handles trace context propagation
         webClient.get()
-                .uri("http://spring-app-1:8081/hello")  // Use service name if possible
+                .uri("http://spring-app-1:8081/api/hello")  // Use service name if possible
                 .retrieve()
                 .bodyToMono(String.class)
                 // Just subscribe with handlers
