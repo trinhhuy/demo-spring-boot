@@ -1,5 +1,6 @@
 package com.example.demo.exception;
 
+import java.net.SocketTimeoutException;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -14,6 +15,7 @@ import com.example.demo.dto.response.ErrorResponse;
 import com.example.demo.dto.response.ResponseUtils;
 
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.web.client.ResourceAccessException;
 
 @RestControllerAdvice
 @Slf4j
@@ -47,6 +49,18 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ErrorResponse<Void>> handleRuntimeException(RuntimeException ex) {
         log.info("Handling RuntimeException: {}", ex.getMessage());
         return ResponseUtils.error(new AppException(ErrorCode.UNCATEGORIZED_EXCEPTION));
+    }
+
+    @ExceptionHandler(SocketTimeoutException.class)
+    public ResponseEntity<ErrorResponse<Void>> handleSocketTimeoutException(SocketTimeoutException ex) {
+        log.info("Handling SocketTimeoutException: {}", ex.getMessage());
+        return ResponseUtils.error(new AppException(ErrorCode.SOCKET_TIMEOUT_EXCEPTION));
+    }
+
+    @ExceptionHandler(ResourceAccessException.class)
+    public ResponseEntity<ErrorResponse<Void>> handleResourceAccessException(ResourceAccessException ex) {
+        log.info("Handling ResourceAccessException: {}", ex.getMessage());
+        return ResponseUtils.error(new AppException(ErrorCode.RESOURCE_ACCESS_EXCEPTION));
     }
 
     @ExceptionHandler(Exception.class)
