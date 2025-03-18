@@ -1,24 +1,27 @@
 package com.example.demo.exception;
 
-import com.example.demo.dto.response.ErrorResponse;
-import com.example.demo.dto.response.ResponseUtils;
-import lombok.extern.slf4j.Slf4j;
+import java.util.HashMap;
+import java.util.Map;
+
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.BindingResult;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
-import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.ExceptionHandler;
 
-import java.util.HashMap;
-import java.util.Map;
+import com.example.demo.dto.response.ErrorResponse;
+import com.example.demo.dto.response.ResponseUtils;
+
+import lombok.extern.slf4j.Slf4j;
 
 @RestControllerAdvice
 @Slf4j
 public class GlobalExceptionHandler {
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ResponseEntity<ErrorResponse<Map<String, String>>> handleMethodArgumentNotValidException(MethodArgumentNotValidException ex) {
+    public ResponseEntity<ErrorResponse<Map<String, String>>> handleMethodArgumentNotValidException(
+            MethodArgumentNotValidException ex) {
         log.info("handleMethodArgumentNotValidException");
         // get errors from BindingResult
         BindingResult result = ex.getBindingResult();
@@ -48,8 +51,7 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorResponse<Void>> handleException(Exception ex) {
-        log.info("Handling Exception: {}",  ex.getMessage());
+        log.info("Handling Exception: {}", ex.getMessage());
         return ResponseUtils.error(new AppException(ErrorCode.UNCATEGORIZED_EXCEPTION));
     }
-
 }

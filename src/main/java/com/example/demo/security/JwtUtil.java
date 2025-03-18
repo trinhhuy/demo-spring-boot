@@ -1,15 +1,17 @@
 package com.example.demo.security;
 
-import io.jsonwebtoken.*;
-import io.jsonwebtoken.security.Keys;
+import java.util.Date;
+import javax.crypto.SecretKey;
+
 import org.springframework.stereotype.Component;
 
-import javax.crypto.SecretKey;
-import java.util.Date;
+import io.jsonwebtoken.*;
+import io.jsonwebtoken.security.Keys;
 
 @Component
 public class JwtUtil {
-    private static final String SECRET_KEY = "your-secret-key-your-secret-key-your-secret-key-your-secret-key"; // Thay bằng key mạnh hơn
+    private static final String SECRET_KEY =
+            "your-secret-key-your-secret-key-your-secret-key-your-secret-key"; // Thay bằng key mạnh hơn
     private static final long EXPIRATION_TIME = 86400000;
 
     private SecretKey getSigningKey() {

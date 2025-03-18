@@ -1,6 +1,7 @@
 package com.example.demo.dto.response;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
+
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 
@@ -17,4 +18,3 @@ public class ErrorResponse<T> {
     @Schema(description = "Error descriptions")
     private T errors;
 }
-

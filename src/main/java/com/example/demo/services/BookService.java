@@ -1,5 +1,8 @@
 package com.example.demo.services;
 
+import org.springframework.data.domain.*;
+import org.springframework.stereotype.Service;
+
 import com.example.demo.dto.request.BookRequest;
 import com.example.demo.dto.response.BookResponse;
 import com.example.demo.exception.AppException;
@@ -8,13 +11,12 @@ import com.example.demo.mapper.BookMapper;
 import com.example.demo.models.Book;
 import com.example.demo.models.User;
 import com.example.demo.repositories.BookRepository;
+import com.example.demo.repositories.UserRepository;
+import com.example.demo.security.JwtUtil;
+
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
-import org.springframework.data.domain.*;
-import org.springframework.stereotype.Service;
-import com.example.demo.repositories.UserRepository;
-import com.example.demo.security.JwtUtil;
 
 @Service
 @RequiredArgsConstructor
@@ -36,21 +38,13 @@ public class BookService {
     public Page<BookResponse> getUserBooks(Pageable pageable) {
         // Giới hạn kích thước trang
         if (pageable != null && pageable.getPageSize() > MAX_PAGE_SIZE) {
-            pageable = PageRequest.of(
-                    pageable.getPageNumber(),
-                    MAX_PAGE_SIZE,
-                    pageable.getSort()
-            );
+            pageable = PageRequest.of(pageable.getPageNumber(), MAX_PAGE_SIZE, pageable.getSort());
         }
 
         User user = userService.getCurrentUser();
         Page<Book> books = bookRepository.findByUser(user, pageable);
 
-        return books.map(book -> new BookResponse(
-                book.getId(),
-                book.getTitle(),
-                book.getAuthor()
-        ));
+        return books.map(book -> new BookResponse(book.getId(), book.getTitle(), book.getAuthor()));
     }
 
     public BookResponse addBook(BookRequest bookRequest) {
@@ -61,11 +55,7 @@ public class BookService {
 
         bookRepository.save(book);
 
-        return new BookResponse(
-                book.getId(),
-                book.getTitle(),
-                book.getAuthor()
-        );
+        return new BookResponse(book.getId(), book.getTitle(), book.getAuthor());
     }
 
     public BookResponse getBookById(Long id) {
@@ -104,6 +94,5 @@ public class BookService {
         Book book = bookRepository.findByIdAndUser(id, user).orElseThrow();
 
         bookRepository.delete(book);
-
     }
 }

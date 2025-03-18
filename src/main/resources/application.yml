@@ -15,7 +15,7 @@ server:
 
 spring:
   datasource:
-    url: jdbc:mysql://localhost:3306/mydb?serverTimezone=UTC
+    url: "jdbc:mysql://localhost:3306/mydb?serverTimezone=UTC"
     username: root
     password: MYSQL_ROOT_PASSWORD
   jpa:
@@ -28,11 +28,31 @@ spring:
 
 springdoc:
   api-docs:
+    enabled: true
     path: /v3/api-docs
   swagger-ui:
+    enabled: true
     path: /swagger-ui.html
-    persistAuthorization: true  # Giữ token khi refresh trang
+    persistAuthorization: true  # keep token when refresh page
 #    tryItOutEnabled: true  # Bật chế độ "Try it now"
-#    add-authorization-header: false  # Tự động thêm Authorization vào request
+#    add-authorization-header: false  # Auto add Authorization to request
 #    default-consumes-media-type: application/json
 #    default-produces-media-type: application/json
+
+  default-consumes-media-type: application/json
+  default-produces-media-type: application/json
+
+api:
+  servers:
+    - url: http://192.168.0.1:8080
+      description: Development Server
+    - url: http://localhost:8080
+      description: Staging Server
+  info:
+    title: "My Open API"
+    version: "0.0.1"
+    description: >
+      springdoc-openapi java library helps to automate the generation of API documentation using spring boot projects.
+      springdoc-openapi works by examining an application at runtime to infer API semantics based on spring configurations,
+      class structure and various annotations. 
+

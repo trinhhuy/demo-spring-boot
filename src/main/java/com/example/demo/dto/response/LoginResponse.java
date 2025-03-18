@@ -11,6 +11,9 @@ import lombok.experimental.FieldDefaults;
 @FieldDefaults(level = AccessLevel.PRIVATE)
 @Schema(description = "Login Response DTO", example = "Token Response DTO")
 public class LoginResponse {
-    @Schema(description = "JWT Token", example = "eyJhbGciOiJIUzM4NCJ9.eyJzdWIiOiJ2dW9uZ3RyYW4iLCJleHAiOjE3NDE3NTEwODN9.8QIK-yVuDrPtekolqC4RtYypp1UzyVgYXeqaAzmkKtO0bQmjHLnJT3Ws8_rkM_BU")
+    @Schema(
+            description = "JWT Token",
+            example =
+                    "eyJhbGciOiJIUzM4NCJ9.eyJzdWIiOiJ2dW9uZ3RyYW4iLCJleHAiOjE3NDE3NTEwODN9.8QIK-yVuDrPtekolqC4RtYypp1UzyVgYXeqaAzmkKtO0bQmjHLnJT3Ws8_rkM_BU")
     String token;
 }
