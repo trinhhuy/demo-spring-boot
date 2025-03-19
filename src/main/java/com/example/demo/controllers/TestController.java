@@ -14,6 +14,7 @@ import com.example.demo.services.App1Service;
 import com.example.demo.services.AsyncApp1Service;
 import com.example.demo.services.ReactiveApp1Service;
 import com.example.demo.services.LoggingService;
+import com.example.demo.services.ExampleService;
 
 @RestController
 @RequestMapping("/api/test")
@@ -29,6 +30,12 @@ public class TestController {
 
     @Autowired
     private AsyncApp1Service asyncApp1Service;
+
+    private final ExampleService exampleService;
+
+    public TestController(ExampleService exampleService) {
+        this.exampleService = exampleService;
+    }
 
     @PostMapping("/sync")
     public String sync() {
@@ -75,4 +82,18 @@ public class TestController {
     //     logger.error("Error log message");
     //     return "Test logging";
     // }
+
+//    @PostMapping("/call-app1-resilience")
+//    public CompletableFuture<String> callApp1Resilience() {
+//        return app1Service.callApp1Resilience()
+//                .thenApply(response -> {
+//                    loggingService.logInfo("Received async response from app1 then return---");
+//                    return "Async response from app1: " + response;
+//                });
+//    }
+
+    @GetMapping("/test-circuit-breaker")
+    public String testCircuitBreaker() {
+        return exampleService.doSomething();
+    }
 }

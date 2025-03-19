@@ -15,6 +15,17 @@ spring:
   aop:
     auto: true
     proxy-target-class: true
+  security:
+    endpoints:
+      web:
+        exposure:
+          include: "*"
+    management:
+      security:
+        enabled: false
+    user:
+      name: admin      # Tên đăng nhập mặc định
+      password: admin  # Mật khẩu mặc định
 
 logging:
   level:
@@ -36,3 +47,37 @@ logbook:
       - cardNumber
   write:
     chunk-size: 1000
+
+resilience4j:  # Cấu hình circuit breaker
+  circuitbreaker:
+    configs:
+      default:
+        registerHealthIndicator: true  # Đăng ký health indicator
+    instances:
+      example:
+        registerHealthIndicator: true  # Đăng ký health indicator cho instance cụ thể
+        slidingWindowSize: 10  # Số lượng request trong cửa sổ trượt
+        failureRateThreshold: 50  # Ngưỡng tỷ lệ lỗi (%)
+        waitDurationInOpenState: 10000  # Thời gian chờ ở trạng thái mở (ms)
+        permittedNumberOfCallsInHalfOpenState: 3  # Số lượng request cho phép ở trạng thái nửa mở
+        slowCallRateThreshold: 50  # Ngưỡng tỷ lệ request chậm (%)
+        slowCallDurationThreshold: 2000  # Ngưỡng thời gian xem là request chậm (ms)
+        minimumNumberOfCalls: 10  # Số lượng request tối thiểu để đánh giá
+        slidingWindowType: COUNT_BASED  # Loại cửa sổ trượt dựa trên số lượng
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "*"  # Expose tất cả endpoints
+      base-path: /actuator  # Đường dẫn cơ sở cho actuator
+  endpoint:
+    health:
+      show-details: always
+    circuitbreaker:
+      enabled: true
+    circuitbreakerevents:  # Thêm endpoint cho circuit breaker events
+      enabled: true
+  health:
+    circuitbreakers:
+      enabled: true
