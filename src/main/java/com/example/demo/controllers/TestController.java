@@ -96,4 +96,24 @@ public class TestController {
     public String testCircuitBreaker() {
         return exampleService.doSomething();
     }
+
+    @GetMapping("/test-circuit-breaker/success")
+    public String testCircuitBreakerSuccess() {
+        return exampleService.serviceWithSuccessfulResponse();
+    }
+
+    @GetMapping("/test-circuit-breaker/failure")
+    public String testCircuitBreakerFailure() {
+        return exampleService.serviceWithFailureResponse();
+    }
+
+    @GetMapping("/test-circuit-breaker/timeout")
+    public CompletableFuture<String> testCircuitBreakerTimeout() {
+        return exampleService.serviceWithTimeout();
+    }
+
+    @GetMapping("/test-circuit-breaker/status")
+    public String getCircuitBreakerStatus() {
+        return exampleService.getCircuitBreakerStatus();
+    }
 }
