@@ -1,0 +1,35 @@
+syntax = "proto3";
+
+import "google/protobuf/empty.proto";
+
+package com.example.demo;
+
+option java_multiple_files = true;
+option java_package = "com.example.demo";
+
+service ProductService {
+  rpc getAProduct(GetAProductRequest) returns (GetAProductResponse){}
+  rpc getListProducts(GetListProductRequest) returns (ListProductResponse){}
+  rpc getAllProducts(google.protobuf.Empty) returns (stream ListProductResponse){}
+}
+
+message GetAProductRequest {
+  uint64 id = 1;
+}
+
+message GetAProductResponse {
+  uint64 id = 1;
+  string name = 2;
+  string description = 3;
+  uint64 quantity = 4;
+}
+
+message GetListProductRequest {
+  uint32 page = 1;
+  uint32 size = 2;
+  string order_direction = 3;
+}
+
+message ListProductResponse {
+  repeated GetAProductResponse list = 1;
+}
