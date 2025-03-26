@@ -1,0 +1,42 @@
+syntax = "proto3";
+
+import "google/protobuf/empty.proto";
+
+package com.example.demo;
+
+option java_multiple_files = true;
+option java_package = "com.example.demo";
+
+service OrderService {
+  rpc getAOrder(GetAOrderRequest) returns (GetAOrderResponse){}
+  rpc createAOrder(CreateAOrderRequest) returns (GetAOrderResponse){}
+}
+
+message GetAOrderRequest {
+  uint64 id = 1;
+}
+
+enum OrderStatusEnum {
+    CANCEL_ORDER = 0;
+
+    INVENTORY_ROLLBACK = 1;
+    INVENTORY_UPDATED = 2;
+
+    ORDER_CANCELLED = 3;
+    ORDER_CREATED = 4;
+    ORDER_COMPLETED = 5;
+
+    PAYMENT_SUCCESS = 6;
+    PAYMENT_FAILED = 7;
+}
+
+message GetAOrderResponse {
+    uint64 id = 1;
+    double amount = 2;
+    OrderStatusEnum orderStatus = 3;
+}
+
+message CreateAOrderRequest {
+  double amount = 1;
+  uint64 product_id = 2;
+}

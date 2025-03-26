@@ -23,18 +23,14 @@ import lombok.extern.slf4j.Slf4j;
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 @Slf4j
 public class App4ServiceImpl {
-    String serviceName;
+    GrpcClientServiceImpl grpcClientService;
 
-    GrpcClientApp4ServiceImpl grpcClientService;
-
-    public App4ServiceImpl(GrpcClientApp4ServiceImpl grpcClientService, @Value("${grpc.client.mcs_name_grpc_server.address}") String serviceName) {
+    public App4ServiceImpl(GrpcClientServiceImpl grpcClientService) {
         this.grpcClientService = grpcClientService;
-        this.serviceName = serviceName;
     }
 
     public ProductResponse getAProduct(int id) {
-        try {
-        ProductServiceGrpc.ProductServiceBlockingStub stub = grpcClientService.getProductServiceStub(serviceName);
+        ProductServiceGrpc.ProductServiceBlockingStub stub = grpcClientService.getProductServiceStub();
         // Gọi các method từ stub
         GetAProductRequest productRequest =
                 GetAProductRequest.newBuilder().setId(id).build();
@@ -45,17 +41,10 @@ public class App4ServiceImpl {
                 .description(productResponse.getDescription())
                 .quantity(productResponse.getQuantity())
                 .build();
-        } catch (StatusRuntimeException e) {
-            log.info("StatusRuntimeException: {}", e.getMessage());
-            return null;
-        } catch (Exception e) {
-            log.info("Exception: {}", e.getMessage());
-            return null;
-        }
     }
 
     public List<ProductResponse> getListProducts(PageableProductRequest request) {
-        ProductServiceGrpc.ProductServiceBlockingStub stub = grpcClientService.getProductServiceStub(serviceName);
+        ProductServiceGrpc.ProductServiceBlockingStub stub = grpcClientService.getProductServiceStub();
         // Gọi các method từ stub
         GetListProductRequest productRequest = GetListProductRequest.newBuilder()
                 .setPage(request.getPage())
@@ -73,7 +62,7 @@ public class App4ServiceImpl {
     }
 
     public List<ProductResponse> getAllProducts() {
-        ProductServiceGrpc.ProductServiceBlockingStub stub = grpcClientService.getProductServiceStub(serviceName);
+        ProductServiceGrpc.ProductServiceBlockingStub stub = grpcClientService.getProductServiceStub();
         // Gọi các method từ stub
         List<ProductResponse> productList = new ArrayList<>();
 
@@ -96,7 +85,7 @@ public class App4ServiceImpl {
     }
 
     public SseEmitter streamProducts() {
-        ProductServiceGrpc.ProductServiceBlockingStub stub = grpcClientService.getProductServiceStub(serviceName);
+        ProductServiceGrpc.ProductServiceBlockingStub stub = grpcClientService.getProductServiceStub();
         // Gọi các method từ stub
         SseEmitter emitter = new SseEmitter();
 

@@ -57,7 +57,7 @@ services:
       SPRING_APPLICATION_NAME: eureka server
       EUREKA_SERVER_URL: http://eureka:8762/eureka/
 
-  grpcserver:
+  app4:
     image: openjdk:21-jdk-slim
     container_name: spring-app-4
 #    restart: always
@@ -92,10 +92,53 @@ services:
       OTEL_TRACES_EXPORTER: otlp
       OTEL_METRICS_EXPORTER: otlp
       OTEL_LOGS_EXPORTER: none
-      SPRING_APPLICATION_NAME: DEMO-SPRING-BOOT-GRPC
+      SPRING_APPLICATION_NAME: PRODUCT-GRPC-SERVER
       GRPC_SERVER_PORT: 9091
       EUREKA_SERVER_DEFAULT_ZONE: http://eureka:8762/eureka/
-      EUREKA_SERVER_HOSTNAME: grpcserver
+      EUREKA_SERVER_HOSTNAME: app4
+    networks:
+      - app-network
+
+
+  app5:
+    image: openjdk:21-jdk-slim
+    container_name: spring-app-5
+    #    restart: always
+    working_dir: /app5
+    volumes:
+      - ./app5:/app5
+      - ./app5/logs:/app5/logs
+      - ./opentelemetry-javaagent.jar:/app5/opentelemetry-javaagent.jar
+      - ~/.m2:/root/.m2
+    ports:
+      - "8086:8086"  # Different port from main app
+      - "9093:9093"
+    command: [ "/bin/sh", "-c", "cd /app5 && ./mvnw spring-boot:run -Dspring-boot.run.jvmArguments='-javaagent:/app5/opentelemetry-javaagent.jar'" ]
+    depends_on:
+      postgres:
+        condition: service_healthy
+      otel-collector:
+        condition: service_started
+    environment:
+      SERVER_PORT: 8086
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/postgres
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: POSTGRES_PASSWORD
+      SPRING_JPA_HIBERNATE_DDL_AUTO: update
+      MANAGEMENT_OTLP_METRICS_EXPORT_URL: http://otel-collector:4318/v1/metrics
+      MANAGEMENT_OTLP_TRACING_ENDPOINT: http://otel-collector:4318/v1/traces
+      SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+      OTEL_EXPORTER_OTLP_TRACES_ENDPOINT: http://otel-collector:4318/v1/traces
+      OTEL_EXPORTER_OTLP_METRICS_ENDPOINT: http://otel-collector:4318/v1/metrics
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4318
+      OTEL_SERVICE_NAME: my-demo-app-5
+      OTEL_TRACES_EXPORTER: otlp
+      OTEL_METRICS_EXPORTER: otlp
+      OTEL_LOGS_EXPORTER: none
+      SPRING_APPLICATION_NAME: ORDER-GRPC-SERVER
+      GRPC_SERVER_PORT: 9093
+      EUREKA_SERVER_DEFAULT_ZONE: http://eureka:8762/eureka/
+      EUREKA_SERVER_HOSTNAME: app5
     networks:
       - app-network
 
@@ -136,7 +179,8 @@ services:
       SPRING_APPLICATION_NAME: demo-spring-boot
       EUREKA_SERVER_DEFAULT_ZONE: http://eureka:8762/eureka/
       EUREKA_SERVER_HOSTNAME: app
-      MCS_NAME_GRPC_SERVER: DEMO-SPRING-BOOT-GRPC
+      MCS_PRODUCT_GRPC_SERVER: PRODUCT-GRPC-SERVER
+      MCS_ORDER_GRPC_SERVER: ORDER-GRPC-SERVER
     networks:
       - app-network
 
