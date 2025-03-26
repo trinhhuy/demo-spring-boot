@@ -76,7 +76,7 @@ services:
       - app-network
 
   prometheus:
-    image: prom/prometheus:latest
+    image: prom/prometheus
     container_name: prometheus
     restart: always
     command:
@@ -84,7 +84,7 @@ services:
       - "--web.enable-remote-write-receiver"
       - "--enable-feature=native-histograms"
     volumes:
-      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
     ports:
       - "9090:9090"
     depends_on:
@@ -93,7 +93,7 @@ services:
       - app-network
 
   grafana:
-    image: grafana/grafana:latest
+    image: grafana/grafana
     container_name: grafana
     restart: always
     ports:
@@ -125,113 +125,113 @@ services:
       - app-network
     user: "0"
 
-  app_1:
-    image: openjdk:21-jdk-slim
-    container_name: spring-app-1
-    restart: always
-    working_dir: /app1
-    volumes:
-      - ./app1:/app1
-      - ./app1/logs:/app1/logs
-      - ./opentelemetry-javaagent.jar:/app1/opentelemetry-javaagent.jar
-    ports:
-      - "8081:8081"  # Different port from main app
-    command: ["/bin/sh", "-c", "cd /app1 && ./mvnw spring-boot:run -Dspring-boot.run.jvmArguments='-javaagent:/app1/opentelemetry-javaagent.jar'"]
-    depends_on:
-      mysql:
-        condition: service_healthy
-      otel-collector:
-        condition: service_started
-    environment:
-      SERVER_PORT: 8081
-      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/book_db
-      SPRING_DATASOURCE_USERNAME: user
-      SPRING_DATASOURCE_PASSWORD: password
-      SPRING_JPA_HIBERNATE_DDL_AUTO: update
-      MANAGEMENT_OTLP_METRICS_EXPORT_URL: http://otel-collector:4318/v1/metrics
-      MANAGEMENT_OTLP_TRACING_ENDPOINT: http://otel-collector:4318/v1/traces
-      SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:9092
-      OTEL_EXPORTER_OTLP_TRACES_ENDPOINT: http://otel-collector:4318/v1/traces
-      OTEL_EXPORTER_OTLP_METRICS_ENDPOINT: http://otel-collector:4318/v1/metrics
-      OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4318
-      OTEL_SERVICE_NAME: my-demo-app-1
-      OTEL_TRACES_EXPORTER: otlp
-      OTEL_METRICS_EXPORTER: otlp
-      OTEL_LOGS_EXPORTER: none
-    networks:
-      - app-network
-
-  app_2:
-    image: openjdk:21-jdk-slim
-    container_name: spring-app-2
-    restart: always
-    working_dir: /app2
-    volumes:
-      - ./app1:/app1
-      - ./app1/logs:/app1/logs
-      - ./opentelemetry-javaagent.jar:/app1/opentelemetry-javaagent.jar
-    ports:
-      - "8082:8082"  # Different port from main app
-    command: [ "/bin/sh", "-c", "cd /app1 && ./mvnw spring-boot:run -Dspring-boot.run.jvmArguments='-javaagent:/app1/opentelemetry-javaagent.jar'" ]
-    depends_on:
-      mysql:
-        condition: service_healthy
-      otel-collector:
-        condition: service_started
-    environment:
-      SERVER_PORT: 8082
-      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/book_db
-      SPRING_DATASOURCE_USERNAME: user
-      SPRING_DATASOURCE_PASSWORD: password
-      SPRING_JPA_HIBERNATE_DDL_AUTO: update
-      MANAGEMENT_OTLP_METRICS_EXPORT_URL: http://otel-collector:4318/v1/metrics
-      MANAGEMENT_OTLP_TRACING_ENDPOINT: http://otel-collector:4318/v1/traces
-      SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:9092
-      OTEL_EXPORTER_OTLP_TRACES_ENDPOINT: http://otel-collector:4318/v1/traces
-      OTEL_EXPORTER_OTLP_METRICS_ENDPOINT: http://otel-collector:4318/v1/metrics
-      OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4318
-      OTEL_SERVICE_NAME: my-demo-app-1
-      OTEL_TRACES_EXPORTER: otlp
-      OTEL_METRICS_EXPORTER: otlp
-      OTEL_LOGS_EXPORTER: none
-    networks:
-      - app-network
-
-  app_3:
-    image: openjdk:21-jdk-slim
-    container_name: spring-app-3
-    restart: always
-    working_dir: /app3
-    volumes:
-      - ./app1:/app1
-      - ./app1/logs:/app1/logs
-      - ./opentelemetry-javaagent.jar:/app1/opentelemetry-javaagent.jar
-    ports:
-      - "8083:8083"  # Different port from main app
-    command: [ "/bin/sh", "-c", "cd /app1 && ./mvnw spring-boot:run -Dspring-boot.run.jvmArguments='-javaagent:/app1/opentelemetry-javaagent.jar'" ]
-    depends_on:
-      mysql:
-        condition: service_healthy
-      otel-collector:
-        condition: service_started
-    environment:
-      SERVER_PORT: 8083
-      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/book_db
-      SPRING_DATASOURCE_USERNAME: user
-      SPRING_DATASOURCE_PASSWORD: password
-      SPRING_JPA_HIBERNATE_DDL_AUTO: update
-      MANAGEMENT_OTLP_METRICS_EXPORT_URL: http://otel-collector:4318/v1/metrics
-      MANAGEMENT_OTLP_TRACING_ENDPOINT: http://otel-collector:4318/v1/traces
-      SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:9092
-      OTEL_EXPORTER_OTLP_TRACES_ENDPOINT: http://otel-collector:4318/v1/traces
-      OTEL_EXPORTER_OTLP_METRICS_ENDPOINT: http://otel-collector:4318/v1/metrics
-      OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4318
-      OTEL_SERVICE_NAME: my-demo-app-1
-      OTEL_TRACES_EXPORTER: otlp
-      OTEL_METRICS_EXPORTER: otlp
-      OTEL_LOGS_EXPORTER: none
-    networks:
-      - app-network
+#  app_1:
+#    image: openjdk:21-jdk-slim
+#    container_name: spring-app-1
+#    restart: always
+#    working_dir: /app1
+#    volumes:
+#      - ./app1:/app1
+#      - ./app1/logs:/app1/logs
+#      - ./opentelemetry-javaagent.jar:/app1/opentelemetry-javaagent.jar
+#    ports:
+#      - "8081:8081"  # Different port from main app
+#    command: ["/bin/sh", "-c", "cd /app1 && ./mvnw spring-boot:run -Dspring-boot.run.jvmArguments='-javaagent:/app1/opentelemetry-javaagent.jar'"]
+#    depends_on:
+#      mysql:
+#        condition: service_healthy
+#      otel-collector:
+#        condition: service_started
+#    environment:
+#      SERVER_PORT: 8081
+#      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/book_db
+#      SPRING_DATASOURCE_USERNAME: user
+#      SPRING_DATASOURCE_PASSWORD: password
+#      SPRING_JPA_HIBERNATE_DDL_AUTO: update
+#      MANAGEMENT_OTLP_METRICS_EXPORT_URL: http://otel-collector:4318/v1/metrics
+#      MANAGEMENT_OTLP_TRACING_ENDPOINT: http://otel-collector:4318/v1/traces
+#      SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+#      OTEL_EXPORTER_OTLP_TRACES_ENDPOINT: http://otel-collector:4318/v1/traces
+#      OTEL_EXPORTER_OTLP_METRICS_ENDPOINT: http://otel-collector:4318/v1/metrics
+#      OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4318
+#      OTEL_SERVICE_NAME: my-demo-app-1
+#      OTEL_TRACES_EXPORTER: otlp
+#      OTEL_METRICS_EXPORTER: otlp
+#      OTEL_LOGS_EXPORTER: none
+#    networks:
+#      - app-network
+#
+#  app_2:
+#    image: openjdk:21-jdk-slim
+#    container_name: spring-app-2
+#    restart: always
+#    working_dir: /app2
+#    volumes:
+#      - ./app1:/app1
+#      - ./app1/logs:/app1/logs
+#      - ./opentelemetry-javaagent.jar:/app1/opentelemetry-javaagent.jar
+#    ports:
+#      - "8082:8082"  # Different port from main app
+#    command: [ "/bin/sh", "-c", "cd /app1 && ./mvnw spring-boot:run -Dspring-boot.run.jvmArguments='-javaagent:/app1/opentelemetry-javaagent.jar'" ]
+#    depends_on:
+#      mysql:
+#        condition: service_healthy
+#      otel-collector:
+#        condition: service_started
+#    environment:
+#      SERVER_PORT: 8082
+#      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/book_db
+#      SPRING_DATASOURCE_USERNAME: user
+#      SPRING_DATASOURCE_PASSWORD: password
+#      SPRING_JPA_HIBERNATE_DDL_AUTO: update
+#      MANAGEMENT_OTLP_METRICS_EXPORT_URL: http://otel-collector:4318/v1/metrics
+#      MANAGEMENT_OTLP_TRACING_ENDPOINT: http://otel-collector:4318/v1/traces
+#      SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+#      OTEL_EXPORTER_OTLP_TRACES_ENDPOINT: http://otel-collector:4318/v1/traces
+#      OTEL_EXPORTER_OTLP_METRICS_ENDPOINT: http://otel-collector:4318/v1/metrics
+#      OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4318
+#      OTEL_SERVICE_NAME: my-demo-app-1
+#      OTEL_TRACES_EXPORTER: otlp
+#      OTEL_METRICS_EXPORTER: otlp
+#      OTEL_LOGS_EXPORTER: none
+#    networks:
+#      - app-network
+#
+#  app_3:
+#    image: openjdk:21-jdk-slim
+#    container_name: spring-app-3
+#    restart: always
+#    working_dir: /app3
+#    volumes:
+#      - ./app1:/app1
+#      - ./app1/logs:/app1/logs
+#      - ./opentelemetry-javaagent.jar:/app1/opentelemetry-javaagent.jar
+#    ports:
+#      - "8083:8083"  # Different port from main app
+#    command: [ "/bin/sh", "-c", "cd /app1 && ./mvnw spring-boot:run -Dspring-boot.run.jvmArguments='-javaagent:/app1/opentelemetry-javaagent.jar'" ]
+#    depends_on:
+#      mysql:
+#        condition: service_healthy
+#      otel-collector:
+#        condition: service_started
+#    environment:
+#      SERVER_PORT: 8083
+#      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/book_db
+#      SPRING_DATASOURCE_USERNAME: user
+#      SPRING_DATASOURCE_PASSWORD: password
+#      SPRING_JPA_HIBERNATE_DDL_AUTO: update
+#      MANAGEMENT_OTLP_METRICS_EXPORT_URL: http://otel-collector:4318/v1/metrics
+#      MANAGEMENT_OTLP_TRACING_ENDPOINT: http://otel-collector:4318/v1/traces
+#      SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+#      OTEL_EXPORTER_OTLP_TRACES_ENDPOINT: http://otel-collector:4318/v1/traces
+#      OTEL_EXPORTER_OTLP_METRICS_ENDPOINT: http://otel-collector:4318/v1/metrics
+#      OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4318
+#      OTEL_SERVICE_NAME: my-demo-app-1
+#      OTEL_TRACES_EXPORTER: otlp
+#      OTEL_METRICS_EXPORTER: otlp
+#      OTEL_LOGS_EXPORTER: none
+#    networks:
+#      - app-network
 
   # Add ZooKeeper (required for Kafka)
   zookeeper:

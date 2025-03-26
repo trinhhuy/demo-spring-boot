@@ -7,14 +7,20 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.PathVariable;
 
 import com.example.demo.services.App1Service;
 import com.example.demo.services.AsyncApp1Service;
 import com.example.demo.services.ReactiveApp1Service;
 import com.example.demo.services.LoggingService;
 import com.example.demo.services.ExampleService;
+import com.example.demo.services.CircuitBreakerCustomService;
+import com.example.demo.exception.ServiceFailureException;
+import com.example.demo.exception.CircuitBreakerException;
+import com.example.demo.dto.CircuitBreakerTestRequest;
 
 @RestController
 @RequestMapping("/api/test")
@@ -32,9 +38,11 @@ public class TestController {
     private AsyncApp1Service asyncApp1Service;
 
     private final ExampleService exampleService;
+    private final CircuitBreakerCustomService circuitBreakerCustomService;
 
-    public TestController(ExampleService exampleService) {
+    public TestController(ExampleService exampleService, CircuitBreakerCustomService circuitBreakerCustomService) {
         this.exampleService = exampleService;
+        this.circuitBreakerCustomService = circuitBreakerCustomService;
     }
 
     @PostMapping("/sync")
@@ -99,12 +107,19 @@ public class TestController {
 
     @GetMapping("/test-circuit-breaker/success")
     public String testCircuitBreakerSuccess() {
+        loggingService.logInfo("Calling circuit breaker success endpoint");
         return exampleService.serviceWithSuccessfulResponse();
     }
 
     @GetMapping("/test-circuit-breaker/failure")
     public String testCircuitBreakerFailure() {
-        return exampleService.serviceWithFailureResponse();
+        try {
+            loggingService.logInfo("Calling circuit breaker failure endpoint");
+            return exampleService.serviceWithFailureResponse();
+        } catch (Exception e) {
+            loggingService.logError("Error in circuit breaker failure endpoint: " + e.getMessage());
+            throw new CircuitBreakerException("Circuit breaker failure: " + e.getMessage());
+        }
     }
 
     @GetMapping("/test-circuit-breaker/timeout")
@@ -115,5 +130,18 @@ public class TestController {
     @GetMapping("/test-circuit-breaker/status")
     public String getCircuitBreakerStatus() {
         return exampleService.getCircuitBreakerStatus();
+    }
+
+   @PostMapping("/test-circuit-breaker/custom")
+   public CompletableFuture<String> testCircuitBreakerCustom(@RequestBody CircuitBreakerTestRequest request) {
+       loggingService.logInfo("Testing circuit breaker for bank: " + request.getBankName()
+           + ", operation: " + request.getOperation());
+       return circuitBreakerCustomService.testWithCustomConfig(request);
+   }
+
+    @GetMapping("/test-circuit-breaker/custom/status/{bankName}")
+    public String getCustomCircuitBreakerStatus(@PathVariable String bankName) {
+        loggingService.logInfo("Checking circuit breaker status for bank: " + bankName);
+        return circuitBreakerCustomService.getCircuitBreakerStatus(bankName);
     }
 }

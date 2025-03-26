@@ -18,16 +18,18 @@ public class ExampleService {
 //    Timeout: @TimeLimiter đảm bảo các operation không chạy quá lâu. Lưu ý phải trả về CompletableFuture.
 //    Rate Limiting: @RateLimiter giới hạn số lượng request trong một khoảng thời gian.
 //    Fallback: Các phương thức fallback được gọi khi có lỗi, với các handler riêng cho từng loại lỗi.
-    
+
     private static final String BACKEND = "example";
-    
+    private static final String BANK_A_BACKEND = "bank-a";
+    private static final String BANK_B_BACKEND = "bank-b";
+
     private final CircuitBreakerRegistry circuitBreakerRegistry;
 
     @Autowired
     public ExampleService(CircuitBreakerRegistry circuitBreakerRegistry) {
         this.circuitBreakerRegistry = circuitBreakerRegistry;
     }
-    
+
     @CircuitBreaker(name = BACKEND, fallbackMethod = "handleGeneralException")
     @Retry(name = BACKEND, fallbackMethod = "handleGeneralException")
     @RateLimiter(name = BACKEND, fallbackMethod = "handleRateLimitException")
@@ -39,7 +41,7 @@ public class ExampleService {
         }
         return "Success";
     }
-    
+
     @CircuitBreaker(name = BACKEND, fallbackMethod = "handleGeneralException")
     @Retry(name = BACKEND, fallbackMethod = "handleGeneralException")
     @RateLimiter(name = BACKEND, fallbackMethod = "handleRateLimitException")
@@ -99,4 +101,4 @@ public class ExampleService {
     public CompletableFuture<String> handleGeneralException(Exception e) {
         return CompletableFuture.completedFuture("Đã xảy ra lỗi: " + e.getMessage());
     }
-} 
+}

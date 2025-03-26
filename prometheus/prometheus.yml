@@ -38,3 +38,14 @@ scrape_configs:
     metrics_path: /metrics
     static_configs:
       - targets: ['tempo:3200']
+
+  # # Add Circuit Breaker monitoring
+  # - job_name: 'circuit-breaker'
+  #   scrape_interval: 5s
+  #   metrics_path: /actuator/prometheus
+  #   static_configs:
+  #     - targets: ['app:8080']
+  #   metrics_relabel_configs:
+  #     - source_labels: [__name__]
+  #       regex: 'resilience4j_.*'
+  #       action: keep

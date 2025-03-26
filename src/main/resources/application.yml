@@ -15,9 +15,6 @@ spring:
   aop:
     auto: true
     proxy-target-class: true
-  security:
-    ignored:
-      - "/api/service/**"  # Bỏ qua xác thực cho các endpoint test
 
 logging:
   level:
@@ -44,33 +41,60 @@ resilience4j:  # Cấu hình circuit breaker
   circuitbreaker:
     configs:
       default:
-        registerHealthIndicator: true  # Đăng ký health indicator để monitoring
+        registerHealthIndicator: true  # Đăng ký health indicator
     instances:
-      example:  # Cấu hình cho instance "example" được sử dụng trong TestController
-        registerHealthIndicator: true
-        slidingWindowSize: 10
-        permittedNumberOfCallsInHalfOpenState: 3
-        slidingWindowType: COUNT_BASED
-        minimumNumberOfCalls: 5
-        waitDurationInOpenState: 10s
-        failureRateThreshold: 50
-        automaticTransitionFromOpenToHalfOpenEnabled: true
+      example:
+        registerHealthIndicator: true  # Đăng ký health indicator cho instance cụ thể
+        slidingWindowSize: 10  # Số lượng request trong cửa sổ trượt
+        failureRateThreshold: 50  # Ngưỡng tỷ lệ lỗi (%)
+        waitDurationInOpenState: 10000  # Thời gian chờ ở trạng thái mở (ms)
+        permittedNumberOfCallsInHalfOpenState: 3  # Số lượng request cho phép ở trạng thái nửa mở
+        slowCallRateThreshold: 50  # Ngưỡng tỷ lệ request chậm (%)
+        slowCallDurationThreshold: 2000  # Ngưỡng thời gian xem là request chậm (ms)
+        minimumNumberOfCalls: 10  # Số lượng request tối thiểu để đánh giá
+        slidingWindowType: COUNT_BASED  # Loại cửa sổ trượt dựa trên số lượng
+      bank-a:
+        registerHealthIndicator: true  # Đăng ký health indicator cho instance cụ thể
+        slidingWindowSize: 10  # Số lượng request trong cửa sổ trượt
+        failureRateThreshold: 50  # Ngưỡng tỷ lệ lỗi (%)
+        waitDurationInOpenState: 10000  # Thời gian chờ ở trạng thái mở (ms)
+        permittedNumberOfCallsInHalfOpenState: 3  # Số lượng request cho phép ở trạng thái nửa mở
+        slowCallRateThreshold: 50  # Ngưỡng tỷ lệ request chậm (%)
+        slowCallDurationThreshold: 2000  # Ngưỡng thời gian xem là request chậm (ms)
+        minimumNumberOfCalls: 10  # Số lượng request tối thiểu để đánh giá
+        slidingWindowType: COUNT_BASED  # Loại cửa sổ trượt dựa trên số lượng
+      bank-b:
+        registerHealthIndicator: true  # Đăng ký health indicator cho instance cụ thể
+        slidingWindowSize: 10  # Số lượng request trong cửa sổ trượt
+        failureRateThreshold: 20  # Ngưỡng tỷ lệ lỗi (%)
+        waitDurationInOpenState: 10000  # Thời gian chờ ở trạng thái mở (ms)
+        permittedNumberOfCallsInHalfOpenState: 3  # Số lượng request cho phép ở trạng thái nửa mở
+        slowCallRateThreshold: 50  # Ngưỡng tỷ lệ request chậm (%)
+        slowCallDurationThreshold: 2000  # Ngưỡng thời gian xem là request chậm (ms)
+        minimumNumberOfCalls: 10  # Số lượng request tối thiểu để đánh giá
+        slidingWindowType: COUNT_BASED  # Loại cửa sổ trượt dựa trên số lượng
+    metrics:
+      enabled: true
+
   retry:
     instances:
       example:
-        maxAttempts: 3
-        waitDuration: 1s
+        maxAttempts: 3  # Số lần thử lại tối đa
+        waitDuration: 1s  # Thời gian chờ giữa các lần thử lại
+
   bulkhead:
     instances:
       example:
-        maxConcurrentCalls: 10
+        maxConcurrentCalls: 10  # Số lượng request đồng thời tối đa được phép xử lý
+
   timelimiter:
     instances:
       example:
-        timeoutDuration: 2s
+        timeoutDuration: 2s  # Thời gian timeout cho mỗi request
+
   ratelimiter:
     instances:
       example:
-        limitForPeriod: 10
-        limitRefreshPeriod: 1s
-        timeoutDuration: 1s
+        limitForPeriod: 10  # Số lượng request tối đa trong một khoảng thời gian
+        limitRefreshPeriod: 1s  # Khoảng thời gian để reset số lượng request
+        timeoutDuration: 1s  # Thời gian timeout khi đạt giới hạn request

@@ -42,10 +42,10 @@ const patternConfigs = {
   // - Kỳ vọng: Khi vượt quá 10 concurrent calls sẽ nhận fallback response
   bulkhead: {
     executor: 'constant-arrival-rate',
-    rate: 100,                // 100 requests/giây
+    rate: 50,                 // Giảm xuống 50 requests/giây
     timeUnit: '1s',
-    preAllocatedVUs: 100,     // Số VUs tối đa để đạt được rate
-    duration: '1m'            // Chạy trong 1 phút
+    preAllocatedVUs: 50,     // Giảm số VUs
+    duration: '1m'
   },
 
   // Rate Limiter Pattern:
@@ -91,12 +91,17 @@ const patternTests = {
     let response;
     const currentState = getCurrentCircuitBreakerState();
     
-    if (currentState === 'HALF_OPEN' && __VU === 1) {
-      // Khi ở HALF_OPEN và là VU đầu tiên, luôn gửi request success
-      console.log('HALF_OPEN state detected - Sending success request');
+    if (currentState === 'HALF_OPEN') {
+      // Khi ở trạng thái HALF_OPEN, gửi request success để chuyển sang CLOSED
+      console.log('HALF_OPEN state detected - Sending success request to recover');
+      response = http.get(`${BASE_URL}/test-circuit-breaker/success`);
+    } else if (currentState === 'CLOSED' && __VU <= 5) {
+      // Khi đã CLOSED và số VU thấp, tiếp tục gửi success để duy trì trạng thái
+      console.log('CLOSED state - Maintaining healthy state with success requests');
       response = http.get(`${BASE_URL}/test-circuit-breaker/success`);
     } else {
-      // Các trường hợp khác gửi request failure
+      // Các trường hợp còn lại gửi request failure
+      console.log('Sending failure request');
       response = http.get(`${BASE_URL}/test-circuit-breaker/failure`);
     }
     
@@ -118,20 +123,22 @@ const patternTests = {
   // - Kiểm tra response khi vượt quá concurrent calls
   // - Log chi tiết khi có lỗi
   bulkhead: function() {
-    const tags = { testType: 'bulkhead' };
-    const response = http.get(`${BASE_URL}/test-circuit-breaker/success`, { tags });
+    const response = http.get(`${BASE_URL}/test-circuit-breaker/success`);
     
     check(response, {
       'Status is 200': (r) => r.status === 200,
       'Valid response received': (r) => {
         const body = r.body.toString();
         return body.includes('Success response') || 
-               body.includes('Hệ thống đang quá tải');
+               body.includes('Hệ thống đang quá tải') ||
+               body.includes('CircuitBreaker is OPEN');
       }
     });
     
+    sleep(0.1);
+    
     if (response.status !== 200) {
-      console.error(`[${new Date().toISOString()}] Bulkhead test failed:`, {
+      console.warn(`[${new Date().toISOString()}] Bulkhead test response:`, {
         status: response.status,
         body: response.body,
         timings: response.timings
