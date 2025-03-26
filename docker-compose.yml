@@ -23,15 +23,92 @@ services:
       start_period: 20s
       timeout: 5s
 
+  postgres:
+    image: postgres:latest
+    container_name: postgres_db
+    environment:
+      POSTGRES_PASSWORD: POSTGRES_PASSWORD
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgres
+    networks:
+      - app-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      retries: 5
+      start_period: 10s
+
+  eureka:
+    image: openjdk:21-jdk-slim  # Chạy trực tiếp với JDK, không cần build image
+    container_name: eureka_server
+    working_dir: /app
+    volumes:
+      - ./eureka:/app  # Mount thư mục code vào containervolumes:
+      - ~/.m2:/root/.m2  # Mount thư mục Maven local repository từ host vào container
+    ports:
+      - "8762:8762"
+    networks:
+        - app-network
+    command: [ "./mvnw", "spring-boot:run" ]  # Chạy trực tiếp Spring Boot từ source code
+    environment:
+      SERVER_PORT: 8762
+      SPRING_APPLICATION_NAME: eureka server
+      EUREKA_SERVER_URL: http://eureka:8762/eureka/
+
+  grpcserver:
+    image: openjdk:21-jdk-slim
+    container_name: spring-app-4
+#    restart: always
+    working_dir: /app4
+    volumes:
+      - ./app4:/app4
+      - ./app4/logs:/app4/logs
+      - ./opentelemetry-javaagent.jar:/app4/opentelemetry-javaagent.jar
+      - ~/.m2:/root/.m2
+    ports:
+      - "8085:8085"  # Different port from main app
+      - "9091:9091"
+    command: [ "/bin/sh", "-c", "cd /app4 && ./mvnw spring-boot:run -Dspring-boot.run.jvmArguments='-javaagent:/app4/opentelemetry-javaagent.jar'" ]
+    depends_on:
+      postgres:
+        condition: service_healthy
+      otel-collector:
+        condition: service_started
+    environment:
+      SERVER_PORT: 8085
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/postgres
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: POSTGRES_PASSWORD
+      SPRING_JPA_HIBERNATE_DDL_AUTO: update
+      MANAGEMENT_OTLP_METRICS_EXPORT_URL: http://otel-collector:4318/v1/metrics
+      MANAGEMENT_OTLP_TRACING_ENDPOINT: http://otel-collector:4318/v1/traces
+      SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+      OTEL_EXPORTER_OTLP_TRACES_ENDPOINT: http://otel-collector:4318/v1/traces
+      OTEL_EXPORTER_OTLP_METRICS_ENDPOINT: http://otel-collector:4318/v1/metrics
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4318
+      OTEL_SERVICE_NAME: my-demo-app-4
+      OTEL_TRACES_EXPORTER: otlp
+      OTEL_METRICS_EXPORTER: otlp
+      OTEL_LOGS_EXPORTER: none
+      SPRING_APPLICATION_NAME: DEMO-SPRING-BOOT-GRPC
+      GRPC_SERVER_PORT: 9091
+      EUREKA_SERVER_DEFAULT_ZONE: http://eureka:8762/eureka/
+      EUREKA_SERVER_HOSTNAME: grpcserver
+    networks:
+      - app-network
+
   app:
     image: openjdk:21-jdk-slim
     container_name: spring_app
-    restart: always
+#    restart: always
     working_dir: /app
     volumes:
       - .:/app
       - ./logs:/app/logs
       - ./opentelemetry-javaagent.jar:/app/opentelemetry-javaagent.jar
+      - ~/.m2:/root/.m2
     ports:
       - "8080:8080"
     command: ["/bin/sh", "-c", "cd /app && ./mvnw spring-boot:run -Dspring-boot.run.jvmArguments='-javaagent:/app/opentelemetry-javaagent.jar'"]
@@ -55,6 +132,11 @@ services:
       OTEL_TRACES_EXPORTER: otlp
       OTEL_METRICS_EXPORTER: otlp
       OTEL_LOGS_EXPORTER: none
+
+      SPRING_APPLICATION_NAME: demo-spring-boot
+      EUREKA_SERVER_DEFAULT_ZONE: http://eureka:8762/eureka/
+      EUREKA_SERVER_HOSTNAME: app
+      MCS_NAME_GRPC_SERVER: DEMO-SPRING-BOOT-GRPC
     networks:
       - app-network
 
@@ -305,3 +387,4 @@ volumes:
   mysql_data:
   grafana_data:
   tempo_data:
+  postgres_data:

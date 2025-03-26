@@ -18,7 +18,26 @@ spring:
   security:
     ignored:
       - "/api/service/**"  # Bỏ qua xác thực cho các endpoint test
+  cloud:
+    loadbalancer:
+      ribbon:
+        enabled: false
 
+eureka:
+  client:
+    serviceUrl:
+      defaultZone: ${EUREKA_SERVER_DEFAULT_ZONE}
+  instance:
+    hostname: ${EUREKA_SERVER_HOSTNAME}
+    instance-id: ${spring.application.name}:${grpc.server.port}
+
+grpc:
+  server:
+    port: 50051  # Port cho gRPC Server
+  client:
+    mcs_name_grpc_server:
+      address: ${MCS_NAME_GRPC_SERVER}
+      negotiationType: plaintext
 logging:
   level:
     com.example.demo: DEBUG
