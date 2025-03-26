@@ -35,8 +35,11 @@ grpc:
   server:
     port: 50051  # Port cho gRPC Server
   client:
-    mcs_name_grpc_server:
-      address: ${MCS_NAME_GRPC_SERVER}
+    mcs_product_grpc_server:
+      address: ${MCS_PRODUCT_GRPC_SERVER}
+      negotiationType: plaintext
+    mcs_order_grpc_server:
+      address: ${MCS_ORDER_GRPC_SERVER}
       negotiationType: plaintext
 logging:
   level:
