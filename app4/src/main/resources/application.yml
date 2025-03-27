@@ -30,9 +30,12 @@ spring:
 #        platform: org.hibernate.engine.transaction.jta.platform.internal.NoJtaPlatform
   kafka:
     bootstrap-servers: ${SPRING_KAFKA_BOOTSTRAP_SERVERS}
+    listener:
+      ack-mode: manual
     consumer:
       group-id: my-group
       auto-offset-reset: earliest
+      enable-auto-commit: false
       key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
       value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
     producer:
@@ -40,6 +43,7 @@ spring:
         order-created: order-created
         payment-success: payment-success
         payment-failed: payment-failed
+      retries: 3
       key-serializer: org.apache.kafka.common.serialization.StringSerializer
       value-serializer: org.apache.kafka.common.serialization.StringSerializer
 
@@ -59,3 +63,4 @@ logging:
     io.grpc: ERROR
     io.netty: ERROR
     org.springframework.cloud.netflix.eureka: DEBUG
+    org.apache.kafka: ERROR
