@@ -3,78 +3,80 @@ import { check, sleep } from 'k6';
 
 const BASE_URL = 'http://localhost:8080/api/test';
 
-// # Test Circuit Breaker
+// # Chạy test Circuit Breaker
 // k6 run --env PATTERN=circuitBreaker circuit-breaker-test.js
 //
-// # Test Bulkhead
+// # Chạy test Bulkhead
 // k6 run --env PATTERN=bulkhead circuit-breaker-test.js
 //
-// # Test Rate Limiter
+// # Chạy test Rate Limiter
 // k6 run --env PATTERN=rateLimiter circuit-breaker-test.js
 //
-// # Test Timeout
+// # Chạy test Timeout
 // k6 run --env PATTERN=timeout circuit-breaker-test.js
 
-// Cấu hình cho từng pattern riêng biệt
+// Cấu hình cho từng pattern test
 const patternConfigs = {
   // Circuit Breaker Pattern:
   // - Mục đích: Test khả năng ngắt mạch khi có nhiều lỗi liên tiếp
-  // - Cách hoạt động: 
-  //   1. Tăng dần users để tạo lỗi
-  //   2. Khi đủ số lỗi, circuit breaker sẽ OPEN
-  //   3. Giảm tải để circuit breaker có thể HALF_OPEN và recovery
+  // - Cấu hình trong ExampleService.java với annotation @CircuitBreaker:
+  //   + slidingWindowSize: 10 (số request để tính failure rate)
+  //   + failureRateThreshold: 50 (tỉ lệ % lỗi để chuyển sang OPEN)
+  //   + waitDurationInOpenState: 10s (thời gian ở trạng thái OPEN)
   circuitBreaker: {
     executor: 'ramping-vus',
     startVUs: 0,
     stages: [
-      { duration: '20s', target: 10 },   // Khởi động với 10 users
-      { duration: '30s', target: 30 },   // Tăng cao để tạo nhiều lỗi -> OPEN
-      { duration: '15s', target: 0 },    // Dừng hoàn toàn để chờ HALF_OPEN
-      { duration: '15s', target: 1 },    // Chỉ dùng 1 user để gửi request thành công
-      { duration: '20s', target: 5 },    // Tăng nhẹ tải sau khi CLOSED
-      { duration: '20s', target: 0 },    // Kết thúc test
+      { duration: '10s', target: 5 },    // Khởi động nhẹ nhàng với 5 users
+      { duration: '20s', target: 20 },   // Tăng nhanh để tạo nhiều lỗi -> OPEN
+      { duration: '10s', target: 0 },    // Dừng để chờ HALF_OPEN
+      { duration: '10s', target: 2 },    // Test phục hồi với ít users
+      { duration: '10s', target: 0 },    // Kết thúc test
     ]
   },
 
   // Bulkhead Pattern:
-  // - Mục đích: Test khả năng giới hạn số lượng concurrent calls
-  // - Cấu hình trong application.yml: maxConcurrentCalls: 10
-  // - Kỳ vọng: Khi vượt quá 10 concurrent calls sẽ nhận fallback response
+  // - Mục đích: Test giới hạn concurrent calls
+  // - Cấu hình trong ExampleService.java với annotation @Bulkhead
+  // - Response codes:
+  //   + 200: Success
+  //   + 503: BULKHEAD_FULL
   bulkhead: {
     executor: 'constant-arrival-rate',
-    rate: 50,                 // Giảm xuống 50 requests/giây
+    rate: 20,
     timeUnit: '1s',
-    preAllocatedVUs: 50,     // Giảm số VUs
+    preAllocatedVUs: 25,
     duration: '1m'
   },
 
   // Rate Limiter Pattern:
-  // - Mục đích: Test giới hạn số lượng requests trong một khoảng thời gian
-  // - Cấu hình trong application.yml: 
-  //   + limitForPeriod: 10 (số requests cho phép)
-  //   + limitRefreshPeriod: 1s (thời gian refresh limit)
+  // - Mục đích: Test giới hạn số request/giây
+  // - Cấu hình trong ExampleService.java với annotation @RateLimiter
+  // - Response codes:
+  //   + 200: Success
+  //   + 429: RATE_LIMIT_EXCEEDED
   rateLimiter: {
-    executor: 'per-vu-iterations',
-    vus: 20,                  // 20 users đồng thời
-    iterations: 50,           // Mỗi user gửi 50 requests
-    maxDuration: '2m'         // Tối đa 2 phút
+    executor: 'constant-vus',
+    vus: 10,
+    duration: '1m'
   },
 
   // Timeout Pattern:
-  // - Mục đích: Test xử lý timeout của service
-  // - Cấu hình trong application.yml: timeoutDuration: 2s
-  // - Kỳ vọng: Requests quá 2s sẽ bị timeout và trả về fallback
+  // - Mục đích: Test xử lý timeout (cấu hình 2s)
+  // - Cấu hình trong ExampleService.java với annotation @TimeLimiter
+  // - Response codes:
+  //   + 200: Success
+  //   + 504: TIMEOUT_ERROR
   timeout: {
     executor: 'constant-vus',
-    vus: 15,                  // 15 users đồng thời
-    duration: '1m'            // Chạy trong 1 phút
+    vus: 5,
+    duration: '30s'
   }
 };
 
-// Lấy pattern từ environment variable hoặc mặc định là circuitBreaker
+// Lấy pattern từ environment variable
 const pattern = __ENV.PATTERN || 'circuitBreaker';
 
-// Export options dựa trên pattern được chọn
 export const options = {
   scenarios: {
     [pattern]: patternConfigs[pattern]
@@ -83,14 +85,12 @@ export const options = {
 
 // Các hàm test pattern
 const patternTests = {
-  // Test Circuit Breaker:
-  // - Gọi endpoint failure để tạo lỗi
-  // - Kiểm tra response và message
-  // - Monitor trạng thái của circuit breaker
+  // Test Circuit Breaker Pattern
   circuitBreaker: function() {
-    let response;
+    let failureCount = 0;
     const currentState = getCurrentCircuitBreakerState();
-    
+    console.log('currentStatecurrentStatecurrentStatecurrentStatecurrentState', currentState);
+    let response;
     if (currentState === 'HALF_OPEN') {
       // Khi ở trạng thái HALF_OPEN, gửi request success để chuyển sang CLOSED
       console.log('HALF_OPEN state detected - Sending success request to recover');
@@ -101,119 +101,94 @@ const patternTests = {
       response = http.get(`${BASE_URL}/test-circuit-breaker/success`);
     } else {
       // Các trường hợp còn lại gửi request failure
-      console.log('Sending failure request');
       response = http.get(`${BASE_URL}/test-circuit-breaker/failure`);
     }
     
+    // console.log(`[${new Date().toISOString()}]`, `- Response: ${response.json().code}`);
     check(response, {
-      'Status is 200': (r) => r.status === 200,
-      'Response contains expected message': (r) => {
-        const body = r.body.toString();
-        return body.includes('Đã xảy ra lỗi') || body.includes('Success');
-      },
-      'Response time < 2s': (r) => r.timings.duration < 2000,
+      'Response code is valid': (r) => {
+        const body = r.json();
+        // Kiểm tra cả HTTP status và response code
+        if (r.status === 500) {
+          // console.log('Service failed with 500');
+          return body.code === '500';     // INTERNAL_SERVER_ERROR
+        } else if (r.status === 503) {
+          // console.log('Circuit Breaker OPEN');
+          return body.code === '503';     // CIRCUIT_BREAKER_OPEN
+        }
+        return false;
+      }
     });
     
     monitorCircuitBreakerState();
-    sleep(1);
+    sleep(0.1);  // Giảm sleep time để tạo nhiều lỗi nhanh hơn
   },
 
-  // Test Bulkhead:
-  // - Gọi endpoint success với tải cao
-  // - Kiểm tra response khi vượt quá concurrent calls
-  // - Log chi tiết khi có lỗi
+  // Test Bulkhead Pattern
   bulkhead: function() {
     const response = http.get(`${BASE_URL}/test-circuit-breaker/success`);
     
     check(response, {
-      'Status is 200': (r) => r.status === 200,
-      'Valid response received': (r) => {
-        const body = r.body.toString();
-        return body.includes('Success response') || 
-               body.includes('Hệ thống đang quá tải') ||
-               body.includes('CircuitBreaker is OPEN');
+      'Response is valid': (r) => {
+        const body = r.json();
+        return body.code === '200' ||   // SUCCESS
+               body.code === '503';     // BULKHEAD_FULL
       }
     });
     
-    sleep(0.1);
-    
-    if (response.status !== 200) {
-      console.warn(`[${new Date().toISOString()}] Bulkhead test response:`, {
-        status: response.status,
-        body: response.body,
-        timings: response.timings
-      });
+    if (response.json().code === '503') {
+      console.warn(`[${new Date().toISOString()}] Bulkhead full`);
     }
+    
+    sleep(0.1);
   },
 
-  // Test Rate Limiter:
-  // - Gọi endpoint success nhiều lần
-  // - Kiểm tra response khi vượt quá rate limit
-  // - Log các requests bị rate limit
+  // Test Rate Limiter Pattern
   rateLimiter: function() {
-    const tags = { testType: 'ratelimit' };
-    const response = http.get(`${BASE_URL}/test-circuit-breaker/success`, { tags });
+    const response = http.get(`${BASE_URL}/test-circuit-breaker/success`);
     
     check(response, {
       'Response is valid': (r) => {
-        const body = r.body.toString();
-        return body.includes('Success response') || 
-               body.includes('Đã vượt quá số lượng yêu cầu cho phép');
+        const body = r.json();
+        return body.code === '200' ||   // SUCCESS
+               body.code === '429';     // RATE_LIMIT_EXCEEDED
       }
     });
     
-    if (response.body.includes('Đã vượt quá số lượng yêu cầu')) {
-      console.warn(`[${new Date().toISOString()}] Request rate limited`);
+    if (response.json().code === '429') {
+      console.warn(`[${new Date().toISOString()}] Rate limit exceeded`);
     }
   },
 
-  // Test Timeout:
-  // - Gọi endpoint timeout (có delay 5s)
-  // - Kiểm tra xử lý timeout và fallback
-  // - Log thời gian phản hồi
+  // Test Timeout Pattern
   timeout: function() {
-    const tags = { testType: 'timeout' };
-    const response = http.get(`${BASE_URL}/test-circuit-breaker/timeout`, { tags });
+    const response = http.get(`${BASE_URL}/test-circuit-breaker/timeout`);
     
     check(response, {
       'Response handled correctly': (r) => {
-        const body = r.body.toString();
-        return body.includes('Delayed response') || 
-               body.includes('Yêu cầu đã hết thời gian chờ');
-      },
-      'Response time is tracked': (r) => {
-        console.log(`Timeout test response time: ${r.timings.duration}ms`);
-        return true;
+        const body = r.json();
+        return body.code === '200' ||   // SUCCESS
+               body.code === '504';     // TIMEOUT_ERROR
       }
     });
+    
+    console.log(`Response time: ${response.timings.duration}ms`);
   }
 };
 
-// Thêm hàm mới để lấy trạng thái hiện tại của Circuit Breaker
+// Lấy trạng thái Circuit Breaker từ endpoint status
 function getCurrentCircuitBreakerState() {
   const response = http.get(`${BASE_URL}/test-circuit-breaker/status`);
-  return response.body.toString();
+  return response.json().data;
 }
 
+// Ghi log trạng thái Circuit Breaker
 function monitorCircuitBreakerState() {
   const state = getCurrentCircuitBreakerState();
-  const timestamp = new Date().toISOString();
-  
-  console.log(`[${timestamp}] Circuit Breaker State: ${state}`);
-  
-  if (state.includes('OPEN')) {
-    console.log('Circuit Breaker opened - Service is failing');
-  } else if (state.includes('HALF_OPEN')) {
-    console.log('Circuit Breaker attempting recovery - Allowing test requests');
-  } else if (state.includes('CLOSED')) {
-    console.log('Circuit Breaker closed - Service is healthy');
-  }
+  console.log(`[${new Date().toISOString()}]`, `- Data: ${state}`);
 }
 
 // Hàm chính để chạy test
-// - Chọn và chạy test dựa trên pattern được chỉ định
-// Cách chạy: k6 run --env PATTERN=<pattern_name> circuit-breaker-test.js
-// Ví dụ: k6 run --env PATTERN=circuitBreaker circuit-breaker-test.js
 export default function() {
   patternTests[pattern]();
 } 

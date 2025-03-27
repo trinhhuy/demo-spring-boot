@@ -5,6 +5,7 @@ import java.util.concurrent.CompletableFuture;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -18,9 +19,8 @@ import com.example.demo.services.ReactiveApp1Service;
 import com.example.demo.services.LoggingService;
 import com.example.demo.services.ExampleService;
 import com.example.demo.services.CircuitBreakerCustomService;
-import com.example.demo.exception.ServiceFailureException;
-import com.example.demo.exception.CircuitBreakerException;
 import com.example.demo.dto.CircuitBreakerTestRequest;
+import com.example.demo.dto.ApiResponse;
 
 @RestController
 @RequestMapping("/api/test")
@@ -101,47 +101,41 @@ public class TestController {
 //    }
 
     @GetMapping("/test-circuit-breaker")
-    public String testCircuitBreaker() {
+    public ResponseEntity<ApiResponse<String>> testCircuitBreaker() {
         return exampleService.doSomething();
     }
 
     @GetMapping("/test-circuit-breaker/success")
-    public String testCircuitBreakerSuccess() {
+    public ResponseEntity<ApiResponse<String>> testCircuitBreakerSuccess() {
         loggingService.logInfo("Calling circuit breaker success endpoint");
         return exampleService.serviceWithSuccessfulResponse();
     }
 
     @GetMapping("/test-circuit-breaker/failure")
-    public String testCircuitBreakerFailure() {
-        try {
-            loggingService.logInfo("Calling circuit breaker failure endpoint");
-            return exampleService.serviceWithFailureResponse();
-        } catch (Exception e) {
-            loggingService.logError("Error in circuit breaker failure endpoint: " + e.getMessage());
-            throw new CircuitBreakerException("Circuit breaker failure: " + e.getMessage());
-        }
+    public ResponseEntity<ApiResponse<String>> testCircuitBreakerFailure() {
+       return exampleService.serviceWithFailureResponse();
     }
 
     @GetMapping("/test-circuit-breaker/timeout")
-    public CompletableFuture<String> testCircuitBreakerTimeout() {
+    public CompletableFuture<ResponseEntity<ApiResponse<String>>> testCircuitBreakerTimeout() {
         return exampleService.serviceWithTimeout();
     }
 
     @GetMapping("/test-circuit-breaker/status")
-    public String getCircuitBreakerStatus() {
+    public ResponseEntity<ApiResponse<String>> getCircuitBreakerStatus() {
         return exampleService.getCircuitBreakerStatus();
     }
 
-   @PostMapping("/test-circuit-breaker/custom")
-   public CompletableFuture<String> testCircuitBreakerCustom(@RequestBody CircuitBreakerTestRequest request) {
-       loggingService.logInfo("Testing circuit breaker for bank: " + request.getBankName()
-           + ", operation: " + request.getOperation());
-       return circuitBreakerCustomService.testWithCustomConfig(request);
-   }
+//    @PostMapping("/test-circuit-breaker/custom")
+//    public CompletableFuture<String> testCircuitBreakerCustom(@RequestBody CircuitBreakerTestRequest request) {
+//        loggingService.logInfo("Testing circuit breaker for bank: " + request.getBankName()
+//            + ", operation: " + request.getOperation());
+//        return circuitBreakerCustomService.testWithCustomConfig(request);
+//    }
 
-    @GetMapping("/test-circuit-breaker/custom/status/{bankName}")
-    public String getCustomCircuitBreakerStatus(@PathVariable String bankName) {
-        loggingService.logInfo("Checking circuit breaker status for bank: " + bankName);
-        return circuitBreakerCustomService.getCircuitBreakerStatus(bankName);
-    }
+//     @GetMapping("/test-circuit-breaker/custom/status/{bankName}")
+//     public String getCustomCircuitBreakerStatus(@PathVariable String bankName) {
+//         loggingService.logInfo("Checking circuit breaker status for bank: " + bankName);
+//         return circuitBreakerCustomService.getCircuitBreakerStatus(bankName);
+//     }
 }
