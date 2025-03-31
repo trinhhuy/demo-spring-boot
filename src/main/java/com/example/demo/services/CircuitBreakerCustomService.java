@@ -4,11 +4,16 @@ import io.github.resilience4j.circuitbreaker.CircuitBreakerRegistry;
 import io.github.resilience4j.circuitbreaker.CircuitBreaker;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import com.example.demo.exception.ServiceFailureException;
 import com.example.demo.dto.CircuitBreakerTestRequest;
 import io.micrometer.core.instrument.MeterRegistry;
+import org.springframework.http.ResponseEntity;
+import com.example.demo.dto.ApiResponse;
+import com.example.demo.enums.ResponseCode;
+import io.github.resilience4j.circuitbreaker.CallNotPermittedException;
+import io.github.resilience4j.bulkhead.BulkheadFullException;
+import io.github.resilience4j.ratelimiter.RequestNotPermitted;
 
-import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.TimeoutException;
 
 @Service
 public class CircuitBreakerCustomService {
@@ -26,20 +31,51 @@ public class CircuitBreakerCustomService {
         this.meterRegistry = meterRegistry;
     }
 
-    public CompletableFuture<String> testWithCustomConfig(CircuitBreakerTestRequest request) {
-        String bankName = request.getBankName().toUpperCase();
-        
-        // Lấy circuit breaker instance tương ứng với từng bank
-        CircuitBreaker circuitBreaker;
-        switch(bankName) {
-            case "BANK_A":
-                circuitBreaker = circuitBreakerRegistry.circuitBreaker(BANK_A_BACKEND);
-                return handleBankA(circuitBreaker, request.getOperation());
-            case "BANK_B":
-                circuitBreaker = circuitBreakerRegistry.circuitBreaker(BANK_B_BACKEND);
-                return handleBankB(circuitBreaker, request.getOperation());
-            default:
-                throw new IllegalArgumentException("Invalid bank name: " + bankName);
+    public ResponseEntity<ApiResponse<String>> testWithCustomConfig(CircuitBreakerTestRequest request) {
+        try {
+            String bankName = request.getBankName().toUpperCase();
+            CircuitBreaker circuitBreaker = getOrCreateCircuitBreaker(bankName);
+            return handleBankOperation(circuitBreaker, bankName, request.getOperation());
+        } catch (IllegalArgumentException e) {
+            return ApiResponse.error(ResponseCode.BAD_REQUEST, e.getMessage());
+        }
+    }
+
+    private ResponseEntity<ApiResponse<String>> handleBankOperation(CircuitBreaker circuitBreaker, String bankName, String operation) {
+        try {
+            return circuitBreaker.executeSupplier(() -> {
+                // Giả lập xử lý nghiệp vụ
+                if ("fail".equalsIgnoreCase(operation)) {
+                    recordMetrics(bankName, operation, false);
+                    return ApiResponse.error(ResponseCode.INTERNAL_SERVER_ERROR, 
+                        String.format("Simulated failure for bank: %s", bankName));
+                }
+                if ("timeout".equalsIgnoreCase(operation)) {
+                    try {
+                        // Bank A xử lý chậm hơn Bank B
+                        long sleepTime = "BANK_A".equals(bankName) ? 2000 : 1000;
+                        Thread.sleep(sleepTime);
+                    } catch (InterruptedException e) {
+                        Thread.currentThread().interrupt();
+                        recordMetrics(bankName, operation, false);
+                        return ApiResponse.error(ResponseCode.TIMEOUT_ERROR, 
+                            String.format("Operation timeout for bank: %s", bankName));
+                    }
+                }
+
+                // Xử lý tỷ lệ lỗi khác nhau cho từng bank
+                double failureRate = "BANK_A".equals(bankName) ? 0.4 : 0.2; // Bank A có tỷ lệ lỗi cao hơn
+                if (Math.random() < failureRate) {
+                    recordMetrics(bankName, operation, false);
+                    return ApiResponse.error(ResponseCode.INTERNAL_SERVER_ERROR,
+                        String.format("Random failure for bank: %s", bankName));
+                }
+
+                recordMetrics(bankName, operation, true);
+                return ApiResponse.success("Operation successful for bank: " + bankName);
+            });
+        } catch (Exception e) {
+            return handleException(e, bankName);
         }
     }
 
@@ -51,82 +87,28 @@ public class CircuitBreakerCustomService {
         ).increment();
     }
 
-    private CompletableFuture<String> handleBankA(CircuitBreaker circuitBreaker, String operation) {
-        return CompletableFuture.supplyAsync(() -> {
-            try {
-                return CircuitBreaker.decorateSupplier(circuitBreaker, () -> {
-                    // Bank A xử lý chậm - 2 giây
-                    try {
-                        Thread.sleep(2000);
-                    } catch (InterruptedException e) {
-                        Thread.currentThread().interrupt();
-                        throw new RuntimeException("Operation interrupted", e);
-                    }
-                    
-                    // Nếu operation là ERROR_OPERATION, tăng tỷ lệ lỗi lên 80%
-                    if ("ERROR_OPERATION".equals(operation)) {
-                        if (Math.random() < 0.8) { // 80% tỷ lệ lỗi
-                            throw new ServiceFailureException("Operation failed at BANK_A - High failure rate for ERROR_OPERATION");
-                        }
-                    } else {
-                        // Operation bình thường - giữ tỷ lệ lỗi 40%
-                        if (Math.random() < 0.4) {
-                            throw new ServiceFailureException("Operation failed at BANK_A - Normal failure rate");
-                        }
-                    }
-                    
-                    recordMetrics("BANK_A", operation, true);
-                    return String.format("Operation '%s' successful at BANK_A", operation);
-                }).get();
-            } catch (Exception e) {
-                recordMetrics("BANK_A", operation, false);
-                if (e.getCause() instanceof ServiceFailureException) {
-                    return "Fallback: Chuyển sang xử lý offline cho BANK_A - " + operation;
-                }
-                return "Fallback: Hệ thống BANK_A tạm thời không khả dụng, vui lòng thử lại sau";
-            }
-        });
+    
+
+    private ResponseEntity<ApiResponse<String>> handleException(Exception e, String bankName) {
+        if (e instanceof CallNotPermittedException) {
+            return ApiResponse.error(ResponseCode.CIRCUIT_BREAKER_OPEN, 
+                String.format("Circuit breaker is open for bank: %s", bankName));
+        } else if (e instanceof BulkheadFullException) {
+            return ApiResponse.error(ResponseCode.BULKHEAD_FULL, 
+                String.format("Too many concurrent requests for bank: %s", bankName));
+        } else if (e instanceof RequestNotPermitted) {
+            return ApiResponse.error(ResponseCode.RATE_LIMIT_EXCEEDED, 
+                String.format("Rate limit exceeded for bank: %s", bankName));
+        } else if (e instanceof TimeoutException) {
+            return ApiResponse.error(ResponseCode.TIMEOUT_ERROR, 
+                String.format("Operation timed out for bank: %s", bankName));
+        }
+        
+        return ApiResponse.error(ResponseCode.INTERNAL_SERVER_ERROR, 
+            String.format("Operation failed for bank: %s. Error: %s", bankName, e.getMessage()));
     }
 
-    private CompletableFuture<String> handleBankB(CircuitBreaker circuitBreaker, String operation) {
-        return CompletableFuture.supplyAsync(() -> {
-            try {
-                return CircuitBreaker.decorateSupplier(circuitBreaker, () -> {
-                    // Bank B xử lý nhanh - 1 giây
-                    try {
-                        Thread.sleep(1000);
-                    } catch (InterruptedException e) {
-                        Thread.currentThread().interrupt();
-                        throw new RuntimeException("Operation interrupted", e);
-                    }
-                    
-                    // Nếu operation là NORMAL_OPERATION, giảm tỷ lệ lỗi xuống 5%
-                    if ("NORMAL_OPERATION".equals(operation)) {
-                        if (Math.random() < 0.05) { // 5% tỷ lệ lỗi
-                            throw new ServiceFailureException("Operation failed at BANK_B - Low failure rate for NORMAL_OPERATION");
-                        }
-                    } else {
-                        // Operation khác - giữ tỷ lệ lỗi 20%
-                        if (Math.random() < 0.2) {
-                            throw new ServiceFailureException("Operation failed at BANK_B - Normal failure rate");
-                        }
-                    }
-                    
-                    recordMetrics("BANK_B", operation, true);
-                    return String.format("Operation '%s' successful at BANK_B", operation);
-                }).get();
-            } catch (Exception e) {
-                recordMetrics("BANK_B", operation, false);
-                if (e.getCause() instanceof ServiceFailureException) {
-                    return "Fallback: Chuyển sang hệ thống dự phòng cho BANK_B - " + operation;
-                }
-                return "Fallback: Hệ thống BANK_B đang bảo trì, vui lòng thử lại sau";
-            }
-        });
-    }
-
-    // Thêm method mới để lấy trạng thái của circuit breaker
-    public String getCircuitBreakerStatus(String bankName) {
+    private CircuitBreaker getOrCreateCircuitBreaker(String bankName) {
         String backend;
         switch(bankName.toUpperCase()) {
             case "BANK_A":
@@ -139,10 +121,19 @@ public class CircuitBreakerCustomService {
                 throw new IllegalArgumentException("Invalid bank name: " + bankName);
         }
         
-        CircuitBreaker circuitBreaker = circuitBreakerRegistry.circuitBreaker(backend);
-        return String.format("Bank: %s, State: %s, Failure Rate: %.2f%%", 
-            bankName,
-            circuitBreaker.getState(),
-            circuitBreaker.getMetrics().getFailureRate());
+        return circuitBreakerRegistry.circuitBreaker(backend);
+    }
+
+    public ResponseEntity<ApiResponse<String>> getCircuitBreakerStatus(String bankName) {
+        try {
+            CircuitBreaker circuitBreaker = getOrCreateCircuitBreaker(bankName);
+            String status = String.format("Bank: %s, State: %s, Failure Rate: %.2f%%", 
+                bankName,
+                circuitBreaker.getState(),
+                circuitBreaker.getMetrics().getFailureRate());
+            return ApiResponse.success(status);
+        } catch (IllegalArgumentException e) {
+            return ApiResponse.error(ResponseCode.BAD_REQUEST, e.getMessage());
+        }
     }
 }

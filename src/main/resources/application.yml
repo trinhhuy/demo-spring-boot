@@ -52,7 +52,7 @@ resilience4j:  # Cấu hình circuit breaker
         slowCallDurationThreshold: 2000  # Request nào mất hơn 2 giây được coi là chậm
         minimumNumberOfCalls: 8  # Cần ít nhất 5 request để đánh giá
         slidingWindowType: COUNT_BASED  # Cửa sổ trượt dựa trên số lượng request // co thêm TIME_BASED - dựa trên thời gian - theo dõi request trong N giây gần nhất - N được định nghĩa ở slidingWindowSize
-        automaticTransitionFromOpenToHalfOpenEnabled: true
+        automaticTransitionFromOpenToHalfOpenEnabled: true # cần cân nhắc về việc chuyển sang HALF-OPEN hay không - liên quan đến nghiệp vụ
       bank-a:
         registerHealthIndicator: true  # Đăng ký health indicator cho instance cụ thể
         slidingWindowSize: 10  # Số lượng request trong cửa sổ trượt
@@ -63,6 +63,15 @@ resilience4j:  # Cấu hình circuit breaker
         slowCallDurationThreshold: 2000  # Ngưỡng thời gian xem là request chậm (ms)
         minimumNumberOfCalls: 10  # Số lượng request tối thiểu để đánh giá
         slidingWindowType: COUNT_BASED  # Loại cửa sổ trượt dựa trên số lượng
+#        automaticTransitionFromOpenToHalfOpenEnabled: true # cần cân nhắc về việc chuyển sang HALF-OPEN hay không - liên quan đến nghiệp vụ
+#         ignoreExceptions:
+#           - java.io.IOException
+#           - java.util.concurrent.TimeoutException
+#         recordExceptions:
+#           - java.net.ConnectException
+#           - java.sql.SQLException
+#         recordFailurePredicate:
+#           - java.lang.Exception
       bank-b:
         registerHealthIndicator: true  # Đăng ký health indicator cho instance cụ thể
         slidingWindowSize: 10  # Số lượng request trong cửa sổ trượt
@@ -73,6 +82,7 @@ resilience4j:  # Cấu hình circuit breaker
         slowCallDurationThreshold: 2000  # Ngưỡng thời gian xem là request chậm (ms)
         minimumNumberOfCalls: 10  # Số lượng request tối thiểu để đánh giá
         slidingWindowType: COUNT_BASED  # Loại cửa sổ trượt dựa trên số lượng
+        automaticTransitionFromOpenToHalfOpenEnabled: true
     metrics:
       enabled: true
 

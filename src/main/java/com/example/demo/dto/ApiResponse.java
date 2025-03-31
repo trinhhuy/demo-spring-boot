@@ -13,11 +13,10 @@ import org.springframework.http.ResponseEntity;
 @NoArgsConstructor
 @AllArgsConstructor
 public class ApiResponse<T> {
+    private T data;
     private String code;
     private String message;
-    private T data;
     private long timestamp;
-
     public static <T> ResponseEntity<ApiResponse<T>> success(T data) {
         ApiResponse<T> response = ApiResponse.<T>builder()
                 .code(ResponseCode.SUCCESS.getCode())

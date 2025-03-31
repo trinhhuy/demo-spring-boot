@@ -87,7 +87,7 @@ export function checkCircuitBreakerStatus() {
 export function testBankA() {
   const payload = JSON.stringify({
     bankName: 'BANK_A',
-    operation: 'ERROR_OPERATION'  // Sử dụng operation gây lỗi
+    operation: 'timeout'  // Sử dụng operation gây lỗi
   });
 
   const response = http.post(
@@ -97,7 +97,7 @@ export function testBankA() {
   );
 
   check(response, {
-    'BANK_A response received': (r) => r.status === 200 || r.status === 500,
+    'BANK_A response received': (r) => r.status === 200 || r.status === 500 || r.status === 503,
     'Circuit Breaker status check': (r) => {
       // if (r.status === 500) {
       //   console.log('BANK_A Circuit Breaker might be OPEN');
@@ -113,7 +113,7 @@ export function testBankA() {
 export function testBankB() {
   const payload = JSON.stringify({
     bankName: 'BANK_B',
-    operation: 'NORMAL_OPERATION'  // Sử dụng operation bình thường
+    operation: 'timeout'  // Sử dụng operation bình thường
   });
 
   const response = http.post(
@@ -124,7 +124,6 @@ export function testBankB() {
 
   check(response, {
     'BANK_B response is successful': (r) => r.status === 200,
-    'BANK_B response contains success message': (r) => r.body.includes('successful'),
     'Circuit Breaker status check': (r) => {
       // console.log('BANK_B Response Status:', r.status);
       // console.log('BANK_B Response Body:', r.body);

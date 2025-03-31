@@ -116,26 +116,26 @@ public class TestController {
        return exampleService.serviceWithFailureResponse();
     }
 
-    @GetMapping("/test-circuit-breaker/timeout")
-    public CompletableFuture<ResponseEntity<ApiResponse<String>>> testCircuitBreakerTimeout() {
-        return exampleService.serviceWithTimeout();
-    }
-
     @GetMapping("/test-circuit-breaker/status")
     public ResponseEntity<ApiResponse<String>> getCircuitBreakerStatus() {
         return exampleService.getCircuitBreakerStatus();
     }
 
-//    @PostMapping("/test-circuit-breaker/custom")
-//    public CompletableFuture<String> testCircuitBreakerCustom(@RequestBody CircuitBreakerTestRequest request) {
-//        loggingService.logInfo("Testing circuit breaker for bank: " + request.getBankName()
-//            + ", operation: " + request.getOperation());
-//        return circuitBreakerCustomService.testWithCustomConfig(request);
-//    }
+    @GetMapping("/test-circuit-breaker/timeout")
+    public CompletableFuture<ResponseEntity<ApiResponse<String>>> testCircuitBreakerTimeout() {
+        return exampleService.serviceWithTimeout();
+    }
 
-//     @GetMapping("/test-circuit-breaker/custom/status/{bankName}")
-//     public String getCustomCircuitBreakerStatus(@PathVariable String bankName) {
-//         loggingService.logInfo("Checking circuit breaker status for bank: " + bankName);
-//         return circuitBreakerCustomService.getCircuitBreakerStatus(bankName);
-//     }
+    @PostMapping("/test-circuit-breaker/custom")
+    public ResponseEntity<ApiResponse<String>> testCircuitBreakerCustom(@RequestBody CircuitBreakerTestRequest request) {
+        loggingService.logInfo("Testing circuit breaker for bank: " + request.getBankName()
+            + ", operation: " + request.getOperation());
+        return circuitBreakerCustomService.testWithCustomConfig(request);
+    }
+
+    @GetMapping("/test-circuit-breaker/custom/status/{bankName}")
+    public ResponseEntity<ApiResponse<String>> getCustomCircuitBreakerStatus(@PathVariable String bankName) {
+        loggingService.logInfo("Checking circuit breaker status for bank: " + bankName);
+        return circuitBreakerCustomService.getCircuitBreakerStatus(bankName);
+    }
 }
