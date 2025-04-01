@@ -18,7 +18,7 @@ spring:
 
 logging:
   level:
-    com.example.demo: DEBUG
+    com.example.demo: DEBUG  # Chọn DEBUG hoặc INFO tùy môi trường
     org.springframework.web: INFO
 #  file:
 #    path: logs/

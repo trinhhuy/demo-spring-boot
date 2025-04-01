@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestParam;
 
 import com.example.demo.services.App1Service;
 import com.example.demo.services.AsyncApp1Service;
@@ -101,19 +102,9 @@ public class TestController {
 //    }
 
     @GetMapping("/test-circuit-breaker")
-    public ResponseEntity<ApiResponse<String>> testCircuitBreaker() {
-        return exampleService.doSomething();
-    }
-
-    @GetMapping("/test-circuit-breaker/success")
-    public ResponseEntity<ApiResponse<String>> testCircuitBreakerSuccess() {
-        loggingService.logInfo("Calling circuit breaker success endpoint");
-        return exampleService.serviceWithSuccessfulResponse();
-    }
-
-    @GetMapping("/test-circuit-breaker/failure")
-    public ResponseEntity<ApiResponse<String>> testCircuitBreakerFailure() {
-       return exampleService.serviceWithFailureResponse();
+    public ResponseEntity<ApiResponse<String>> testCircuitBreaker(
+            @RequestParam(defaultValue = "true") boolean success) {
+        return exampleService.doSomething(success);
     }
 
     @GetMapping("/test-circuit-breaker/status")

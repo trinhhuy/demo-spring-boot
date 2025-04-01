@@ -38,28 +38,18 @@ public class ExampleService {
 
     @CircuitBreaker(name = BACKEND, fallbackMethod = "handleException")
     @Retry(name = BACKEND, fallbackMethod = "handleException")
-    @RateLimiter(name = BACKEND, fallbackMethod = "handleException")
-    @Bulkhead(name = BACKEND, fallbackMethod = "handleException")
-    public ResponseEntity<ApiResponse<String>> doSomething() {
-        if(Math.random() < 0.7) {
+    public ResponseEntity<ApiResponse<String>> doSomething(boolean success) {
+        if (!success) {
             throw new RuntimeException("Service failed!");
         }
-        return ApiResponse.success("Success");
+        return ApiResponse.success("Operation completed successfully");
     }
 
-    @CircuitBreaker(name = BACKEND, fallbackMethod = "handleException")
-    @Retry(name = BACKEND, fallbackMethod = "handleException")
-    public ResponseEntity<ApiResponse<String>> serviceWithSuccessfulResponse() {
-        // Bỏ random error, luôn trả về success
-        return ApiResponse.success("Success response");
+    public ResponseEntity<ApiResponse<String>> getCircuitBreakerStatus() {
+        String state = circuitBreakerRegistry.circuitBreaker(BACKEND).getState().toString();
+        return ApiResponse.success(state);
     }
-
-    @CircuitBreaker(name = BACKEND, fallbackMethod = "handleException")
-    @Retry(name = BACKEND, fallbackMethod = "handleException")
-    public ResponseEntity<ApiResponse<String>> serviceWithFailureResponse() {
-        throw new RuntimeException("Service failed!");
-    }
-
+        
     @CircuitBreaker(name = BACKEND, fallbackMethod = "handleException")
     @Retry(name = BACKEND, fallbackMethod = "handleException")
     @TimeLimiter(name = BACKEND, fallbackMethod = "handleException")
@@ -76,22 +66,18 @@ public class ExampleService {
         });
     }
 
-    public ResponseEntity<ApiResponse<String>> getCircuitBreakerStatus() {
-        String state = circuitBreakerRegistry.circuitBreaker(BACKEND).getState().toString();
-        return ApiResponse.success(state);
-    }
-
     // Cập nhật fallback method để xử lý các loại exception cụ thể
     public ResponseEntity<ApiResponse<String>> handleException(Exception e) {
         if (e instanceof io.github.resilience4j.circuitbreaker.CallNotPermittedException) {
             return ApiResponse.error(ResponseCode.CIRCUIT_BREAKER_OPEN);
-        } else if (e instanceof RequestNotPermitted) {
-            return ApiResponse.error(ResponseCode.RATE_LIMIT_EXCEEDED);
-        } else if (e instanceof BulkheadFullException) {
-            return ApiResponse.error(ResponseCode.BULKHEAD_FULL);
-        } else if (e instanceof java.util.concurrent.TimeoutException) {
-            return ApiResponse.error(ResponseCode.TIMEOUT_ERROR);
-        }
+        } 
+        // else if (e instanceof RequestNotPermitted) {
+        //     return ApiResponse.error(ResponseCode.RATE_LIMIT_EXCEEDED);
+        // } else if (e instanceof BulkheadFullException) {
+        //     return ApiResponse.error(ResponseCode.BULKHEAD_FULL);
+        // } else if (e instanceof java.util.concurrent.TimeoutException) {
+        //     return ApiResponse.error(ResponseCode.TIMEOUT_ERROR);
+        // }
         
         // Mặc định trả về internal server error
         return ApiResponse.error(ResponseCode.INTERNAL_SERVER_ERROR);

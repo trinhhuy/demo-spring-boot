@@ -11,13 +11,11 @@ public class GlobalExceptionHandler {
 //             .body(response);
 //     }
 
-//     @ExceptionHandler(CallNotPermittedException.class)
-//     @ResponseStatus(HttpStatus.SERVICE_UNAVAILABLE)
-//     public ResponseEntity<ApiResponse<String>> handleCircuitBreakerException(CallNotPermittedException ex) {
-//         return ResponseEntity
-//             .status(HttpStatus.SERVICE_UNAVAILABLE)
-//             .body(ApiResponse.error(ResponseCode.CIRCUIT_BREAKER_OPEN, "Service is temporarily unavailable"));
-//     }
+    // @ExceptionHandler(CallNotPermittedException.class)
+    // @ResponseStatus(HttpStatus.SERVICE_UNAVAILABLE)
+    // public ResponseEntity<ApiResponse<String>> handleCircuitBreakerException(CallNotPermittedException ex) {
+    //     return ApiResponse.error(ResponseCode.CIRCUIT_BREAKER_OPEN);
+    // }
 
 //     @ExceptionHandler(BulkheadFullException.class)
 //     @ResponseStatus(HttpStatus.TOO_MANY_REQUESTS)
