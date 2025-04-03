@@ -1,5 +1,7 @@
 package com.example.demo.services;
 
+import java.util.Map;
+
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -30,7 +32,8 @@ public class UserService {
     public void register(RegisterRequest request) {
         boolean checkUsernameExists = userRepository.existsByUsername(request.getUsername());
         if (checkUsernameExists) {
-            throw new AppException(ErrorCode.USERNAME_EXISTED);
+            throw (new AppException(ErrorCode.RESOURCE_EXISTED))
+                    .withDetails(Map.of("username", request.getUsername(), "issue", "username already existed"));
         }
 
         User user = new User();
@@ -42,11 +45,12 @@ public class UserService {
     public LoginResponse login(LoginRequest request) {
         User user = userRepository.findByUsername(request.getUsername()).orElse(null);
         if (user == null) {
-            throw new AppException(ErrorCode.USERNAME_NOT_EXISTED);
+            throw (new AppException(ErrorCode.RESOURCE_NOT_EXISTED))
+                    .withDetails(Map.of("username", request.getUsername(), "issue", "username not found"));
         }
 
         if (!passwordEncoder.matches(request.getPassword(), user.getPassword())) {
-            throw new AppException(ErrorCode.PASSWORD_NOT_CORRECT);
+            throw (new AppException(ErrorCode.UNAUTHORIZED)).withDetails(Map.of("issue", "Wrong password"));
         }
         String token = jwtUtil.generateToken(user.getUsername());
         return new LoginResponse(token);

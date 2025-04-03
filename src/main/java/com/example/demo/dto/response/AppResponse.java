@@ -1,5 +1,7 @@
 package com.example.demo.dto.response;
 
+import java.util.Map;
+
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -14,13 +16,13 @@ import lombok.experimental.FieldDefaults;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @Schema(description = "Generic response wrapper")
 public class AppResponse<T> {
-    @Schema(description = "Response code", example = "200")
+    @Schema(description = "Response Status", example = "success")
     @Builder.Default
-    private int code = 200;
+    private String status = "success";
 
-    @Schema(description = "Response message", example = "Success")
-    private String message;
+    @Schema(description = "Response Data")
+    private T data;
 
-    @Schema(description = "Response result")
-    private T result;
+    @Schema(description = "Response Metadata")
+    private Map<String, Object> metadata;
 }

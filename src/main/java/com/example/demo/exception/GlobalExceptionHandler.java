@@ -1,71 +1,76 @@
 package com.example.demo.exception;
 
 import java.net.SocketTimeoutException;
-import java.util.HashMap;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import org.springframework.http.ResponseEntity;
-import org.springframework.validation.BindingResult;
-import org.springframework.validation.FieldError;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.core.AuthenticationException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.client.ResourceAccessException;
 
 import com.example.demo.dto.response.ErrorResponse;
 import com.example.demo.dto.response.ResponseUtils;
 
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.web.client.ResourceAccessException;
-
 @RestControllerAdvice
-@Slf4j
 public class GlobalExceptionHandler {
+    private static final String ISSUE = "issue";
+    private static final String FIELD = "field";
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ResponseEntity<ErrorResponse<Map<String, String>>> handleMethodArgumentNotValidException(
-            MethodArgumentNotValidException ex) {
-        log.info("handleMethodArgumentNotValidException");
+    public ResponseEntity<ErrorResponse<Object>> handleMethodArgumentNotValidException(
+            MethodArgumentNotValidException exception) {
         // get errors from BindingResult
-        BindingResult result = ex.getBindingResult();
-        Map<String, String> fieldErrors = new HashMap<>();
-        for (FieldError fieldError : result.getFieldErrors()) {
-            fieldErrors.put(fieldError.getField(), fieldError.getDefaultMessage());
-        }
+        List<Object> details = exception.getBindingResult().getFieldErrors().stream()
+                .map(error -> Map.of(FIELD, error.getField(), ISSUE, error.getDefaultMessage()))
+                .collect(Collectors.toList());
 
-        ErrorResponse<Map<String, String>> errorResponse = new ErrorResponse<>();
-        errorResponse.setCode(ErrorCode.INVALID_DTO.getCode());
-        errorResponse.setMessage(ErrorCode.INVALID_DTO.getMessage());
-        errorResponse.setErrors(fieldErrors);
-        return ResponseEntity.status(ErrorCode.INVALID_DTO.getStatusCode()).body(errorResponse);
+        return ResponseUtils.error(ErrorCode.VALIDATION_FAILED, details);
+    }
+
+    @ExceptionHandler(AccessDeniedException.class)
+    public ResponseEntity<ErrorResponse<Object>> handleAccessDeniedException(AccessDeniedException exception) {
+        return createErrorResponse(exception.getMessage(), ErrorCode.UNAUTHORIZED);
+    }
+
+    @ExceptionHandler(AuthenticationException.class)
+    public ResponseEntity<ErrorResponse<Object>> handleAccessDeniedException(AuthenticationException exception) {
+        return createErrorResponse(exception.getMessage(), ErrorCode.UNAUTHORIZED);
     }
 
     @ExceptionHandler(AppException.class)
-    public ResponseEntity<ErrorResponse<Void>> handleAppException(AppException ex) {
-        log.info("Handling AppException: {}", ex.getMessage());
-        return ResponseUtils.error(ex);
-    }
-
-    @ExceptionHandler(RuntimeException.class)
-    public ResponseEntity<ErrorResponse<Void>> handleRuntimeException(RuntimeException ex) {
-        log.info("Handling RuntimeException: {}", ex.getMessage());
-        return ResponseUtils.error(new AppException(ErrorCode.UNCATEGORIZED_EXCEPTION));
+    public ResponseEntity<ErrorResponse<Object>> handleAppException(AppException appException) {
+        return ResponseUtils.error(appException);
     }
 
     @ExceptionHandler(SocketTimeoutException.class)
-    public ResponseEntity<ErrorResponse<Void>> handleSocketTimeoutException(SocketTimeoutException ex) {
-        log.info("Handling SocketTimeoutException: {}", ex.getMessage());
-        return ResponseUtils.error(new AppException(ErrorCode.SOCKET_TIMEOUT_EXCEPTION));
+    public ResponseEntity<ErrorResponse<Object>> handleSocketTimeoutException(SocketTimeoutException exception) {
+        return createErrorResponse(exception.getMessage(), ErrorCode.SOCKET_TIMEOUT_EXCEPTION);
     }
 
     @ExceptionHandler(ResourceAccessException.class)
-    public ResponseEntity<ErrorResponse<Void>> handleResourceAccessException(ResourceAccessException ex) {
-        log.info("Handling ResourceAccessException: {}", ex.getMessage());
-        return ResponseUtils.error(new AppException(ErrorCode.RESOURCE_ACCESS_EXCEPTION));
+    public ResponseEntity<ErrorResponse<Object>> handleResourceAccessException(ResourceAccessException exception) {
+        return createErrorResponse(exception.getMessage(), ErrorCode.RESOURCE_ACCESS_EXCEPTION);
+    }
+
+    @ExceptionHandler(RuntimeException.class)
+    public ResponseEntity<ErrorResponse<Object>> handleRuntimeException(RuntimeException exception) {
+        return createErrorResponse(exception.getMessage(), ErrorCode.UNCATEGORIZED_EXCEPTION);
     }
 
     @ExceptionHandler(Exception.class)
-    public ResponseEntity<ErrorResponse<Void>> handleException(Exception ex) {
-        log.info("Handling Exception: {}", ex.getMessage());
-        return ResponseUtils.error(new AppException(ErrorCode.UNCATEGORIZED_EXCEPTION));
+    public ResponseEntity<ErrorResponse<Object>> handleException(Exception exception) {
+        return createErrorResponse(exception.getMessage(), ErrorCode.INTERNAL_SERVER_ERROR);
+    }
+
+    private ResponseEntity<ErrorResponse<Object>> createErrorResponse(String issue, ErrorCode errorCode) {
+        List<Object> details = new ArrayList<>();
+        details.add(Map.of(ISSUE, issue));
+        return ResponseUtils.error(errorCode, details);
     }
 }

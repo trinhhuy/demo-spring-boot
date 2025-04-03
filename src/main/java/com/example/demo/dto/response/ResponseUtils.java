@@ -1,19 +1,28 @@
 package com.example.demo.dto.response;
 
+import java.util.List;
+import java.util.Map;
+
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 
 import com.example.demo.exception.AppException;
+import com.example.demo.exception.ErrorCode;
 
 public class ResponseUtils {
     private void ResponseUtil() {
         throw new UnsupportedOperationException("Utility class should not be instantiated");
     }
 
+    // success response
     public static <T> ResponseEntity<AppResponse<T>> success(T data) {
         AppResponse<T> response = new AppResponse<>();
-        response.setResult(data);
+        response.setData(data);
+        return new ResponseEntity<>(response, HttpStatus.OK);
+    }
+
+    public static <T> ResponseEntity<AppResponse<T>> success(AppResponse<T> response) {
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
 
@@ -22,27 +31,28 @@ public class ResponseUtils {
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
 
-    public static ResponseEntity<AppResponse<Void>> success(String message) {
-        AppResponse<Void> response = new AppResponse<>();
-        response.setMessage(message);
+    public static <T> ResponseEntity<AppResponse<T>> success(T data, Map<String, Object> metadata) {
+        AppResponse<T> response = new AppResponse<>();
+        response.setData(data);
+        response.setMetadata(metadata);
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
 
     public static <T> ResponseEntity<AppResponse<T>> successWithHeaders(T data, HttpHeaders headers) {
         AppResponse<T> response = new AppResponse<>();
-        response.setResult(data);
+        response.setData(data);
         return new ResponseEntity<>(response, headers, HttpStatus.OK);
     }
 
     public static <T> ResponseEntity<AppResponse<T>> created(T data) {
         AppResponse<T> response = new AppResponse<>();
-        response.setResult(data);
+        response.setData(data);
         return new ResponseEntity<>(response, HttpStatus.CREATED);
     }
 
-    public static ResponseEntity<AppResponse<Void>> created(String message) {
+    public static ResponseEntity<AppResponse<Void>> created(Map<String, Object> metadata) {
         AppResponse<Void> response = new AppResponse<>();
-        response.setMessage(message);
+        response.setMetadata(metadata);
         return new ResponseEntity<>(response, HttpStatus.CREATED);
     }
 
@@ -50,17 +60,30 @@ public class ResponseUtils {
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
 
-    //    public static <T> ResponseEntity<AppResponse<T>> error(AppException ex) {
-    //        AppResponse<T> response = new AppResponse<>();
-    //        response.setCode(ex.getErrorCode().getCode());
-    //        response.setMessage(ex.getErrorCode().getMessage());
-    //        return new ResponseEntity<>(response, ex.getErrorCode().getStatusCode());
-    //    }
+    // error response
+    public static ResponseEntity<ErrorResponse<Object>> error(AppException appException) {
+        return ResponseEntity.status(appException.getCode()).body(createErrorResponse(appException));
+    }
 
-    public static <T> ResponseEntity<ErrorResponse<T>> error(AppException ex) {
-        ErrorResponse<T> response = new ErrorResponse<>();
-        response.setCode(ex.getErrorCode().getCode());
-        response.setMessage(ex.getErrorCode().getMessage());
-        return new ResponseEntity<>(response, ex.getErrorCode().getStatusCode());
+    public static ResponseEntity<ErrorResponse<Object>> error(ErrorCode errorCode, List<Object> details) {
+        return ResponseEntity.status(errorCode.getCode()).body(createErrorResponse(errorCode, details));
+    }
+
+    private static ErrorResponse<Object> createErrorResponse(AppException appException) {
+        ErrorDetail<Object> errorDetail = ErrorDetail.builder()
+                .code(appException.getCode().value())
+                .message(appException.getMessage())
+                .details(appException.getDetails())
+                .build();
+        return ErrorResponse.builder().error(errorDetail).build();
+    }
+
+    private static ErrorResponse<Object> createErrorResponse(ErrorCode errorCode, List<Object> details) {
+        ErrorDetail<Object> errorDetail = ErrorDetail.builder()
+                .code(errorCode.getCode().value())
+                .message(errorCode.getMessage())
+                .details(details)
+                .build();
+        return ErrorResponse.builder().error(errorDetail).build();
     }
 }

@@ -63,7 +63,7 @@ class UserServiceTest {
 
         // Act & Assert: Kiểm tra rằng khi username đã tồn tại, sẽ ném ra exception
         AppException thrown = assertThrows(AppException.class, () -> userService.register(registerRequest));
-        assertEquals(ErrorCode.USERNAME_EXISTED, thrown.getErrorCode());
+        assertEquals(ErrorCode.RESOURCE_EXISTED, thrown.getErrorCode());
 
         // Verify: Kiểm tra rằng không có lưu user nào vào repository
         verify(userRepository, times(0)).save(any(User.class));

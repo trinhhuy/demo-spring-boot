@@ -1,30 +1,42 @@
 package com.example.demo.exception;
 
-import lombok.AllArgsConstructor;
+import lombok.Getter;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
 
-import lombok.AccessLevel;
-import lombok.Getter;
-import lombok.experimental.FieldDefaults;
-
 @Getter
-@AllArgsConstructor
-@FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 public enum ErrorCode {
-    UNCATEGORIZED_EXCEPTION(5000, "Uncategorized error", HttpStatus.INTERNAL_SERVER_ERROR),
-    SOCKET_TIMEOUT_EXCEPTION(5001, "Socket Timeout error", HttpStatus.GATEWAY_TIMEOUT),
-    RESOURCE_ACCESS_EXCEPTION(5002, "Resource Access error", HttpStatus.GATEWAY_TIMEOUT),
+    // Validation Errors (4xx)
+    BAD_REQUEST(HttpStatus.BAD_REQUEST, "Bad request"),
+    INVALID_REQUEST(HttpStatus.BAD_REQUEST, "Invalid request"),
+    VALIDATION_FAILED(HttpStatus.BAD_REQUEST, "Validation failed"),
 
-    BAD_REQUEST(4000, "Bad request", HttpStatus.BAD_REQUEST),
-    INVALID_DTO(4001, "Invalid DTO", HttpStatus.BAD_REQUEST),
-    USERNAME_EXISTED(4002, "Username existed", HttpStatus.BAD_REQUEST),
-    PASSWORD_NOT_CORRECT(4003, "Password not correct", HttpStatus.BAD_REQUEST),
-    USERNAME_NOT_EXISTED(4004, "Username not existed", HttpStatus.NOT_FOUND),
-    UNAUTHORIZED(4005, "You do not have permission", HttpStatus.UNAUTHORIZED),
+    // Authentication & Authorization Errors
+    UNAUTHORIZED(HttpStatus.UNAUTHORIZED, "Unauthorized"),
+    FORBIDDEN(HttpStatus.FORBIDDEN, "Forbidden"),
+
+    // Resource Errors
+    NOT_FOUND(HttpStatus.NOT_FOUND, "Resource not found"),
+    RESOURCE_ACCESS_EXCEPTION(HttpStatus.GATEWAY_TIMEOUT, "Resource access error"),
+    RESOURCE_EXISTED(HttpStatus.BAD_REQUEST, "Resource already existed"),
+    RESOURCE_NOT_EXISTED(HttpStatus.BAD_REQUEST, "Resource not existed"),
+
+    // Business Logic Errors
+    INSUFFICIENT_FUNDS(HttpStatus.CONFLICT, "Not enough balance to complete the purchase"),
+
+    // System Errors (5xx)
+    UNCATEGORIZED_EXCEPTION(HttpStatus.INTERNAL_SERVER_ERROR, "Uncategorized exception"),
+    INTERNAL_SERVER_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "Internal server error"),
+    SERVICE_UNAVAILABLE(HttpStatus.SERVICE_UNAVAILABLE, "Service unavailable"),
+    SOCKET_TIMEOUT_EXCEPTION(HttpStatus.GATEWAY_TIMEOUT, "Socket timeout exception"),
     ;
 
-    int code;
-    String message;
-    HttpStatusCode statusCode;
+    private final HttpStatusCode code;
+    private final String message;
+
+    ErrorCode(HttpStatusCode code, String message) {
+        this.code = code;
+        this.message = message;
+    }
+
 }

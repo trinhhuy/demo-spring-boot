@@ -9,7 +9,7 @@ import lombok.experimental.FieldDefaults;
 @Data
 @AllArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE)
-@Schema(description = "Login Response DTO", example = "Token Response DTO")
+@Schema(name = "Login Response DTO", description = "Token Response DTO")
 public class LoginResponse {
     @Schema(
             description = "JWT Token",

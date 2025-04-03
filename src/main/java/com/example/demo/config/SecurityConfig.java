@@ -1,13 +1,21 @@
 package com.example.demo.config;
 
+import java.io.IOException;
+
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.web.AuthenticationEntryPoint;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
@@ -43,27 +51,32 @@ public class SecurityConfig {
             "/swagger-ui/**",
             "/swagger-ui.html"
         };
-        http.csrf(csrf -> csrf.disable())
+        http.csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(auth -> auth.requestMatchers(publicEndpoints)
                         .permitAll()
                         .anyRequest()
                         .authenticated())
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                .addFilterBefore(jwtFilter(), UsernamePasswordAuthenticationFilter.class);
+                .addFilterBefore(jwtFilter(), UsernamePasswordAuthenticationFilter.class)
+                .exceptionHandling(ex -> ex.authenticationEntryPoint(new CustomAuthenticationEntryPoint()));
         return http.build();
     }
 
-    //    @Bean
-    //    public CorsFilter corsFilter() {
-    //        CorsConfiguration corsConfiguration = new CorsConfiguration();
-    //
-    //        corsConfiguration.addAllowedOrigin("*");
-    //        corsConfiguration.addAllowedMethod("*");
-    //        corsConfiguration.addAllowedHeader("*");
-    //
-    //        UrlBasedCorsConfigurationSource urlBasedCorsConfigurationSource = new UrlBasedCorsConfigurationSource();
-    //        urlBasedCorsConfigurationSource.registerCorsConfiguration("/**", corsConfiguration);
-    //
-    //        return new CorsFilter(urlBasedCorsConfigurationSource);
-    //    }
+    // Custom AuthenticationEntryPoint để xử lý lỗi khi không có JWT
+    public static class CustomAuthenticationEntryPoint implements AuthenticationEntryPoint {
+        @Override
+        public void commence(
+                HttpServletRequest request, HttpServletResponse response, AuthenticationException authException)
+                throws IOException {
+            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+            response.setContentType("application/json");
+            response.getWriter()
+                    .write("{" + "\"status\": \"error\","
+                            + "\"error\": {"
+                            + "\"code\": 401,"
+                            + "\"message\":\"Unauthorized access. Please provide a valid JWT token.\""
+                            + "}"
+                            + "}");
+        }
+    }
 }
