@@ -56,3 +56,27 @@ api:
       springdoc-openapi works by examining an application at runtime to infer API semantics based on spring configurations,
       class structure and various annotations. 
 
+  aop:
+    auto: true
+    proxy-target-class: true
+
+logging:
+  level:
+    com.example.demo: DEBUG
+    org.springframework.web: INFO
+#  file:
+#    path: logs/
+
+logbook:
+  format.style: http
+  obfuscate:
+    headers:
+      - Authorization
+      - X-API-Key
+    parameters:
+      - password
+      - secret
+      - creditCard
+      - cardNumber
+  write:
+    chunk-size: 1000
