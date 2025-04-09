@@ -38,7 +38,6 @@ public class LoggingAspect {
             // Log response cho các phương thức đồng bộ
             String responseData = result != null ? objectMapper.writeValueAsString(result) : "void";
             loggingService.log("Finish: ", responseData);
-
             return result;
         } finally {
             MDC.clear();

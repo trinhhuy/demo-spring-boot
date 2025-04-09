@@ -8,7 +8,6 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.example.demo.services.KafkaProducerService;
 import com.example.demo.services.LoggingService;
-
 @RestController
 @RequestMapping("/api/kafka")
 public class KafkaController {

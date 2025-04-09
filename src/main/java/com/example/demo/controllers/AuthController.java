@@ -43,7 +43,56 @@ public class AuthController {
     private App1Service app1Service;
 
     @Autowired
+    private App1Service app1Service;
+
+    @Autowired
     private JwtUtil jwtUtil;
+    
+    @Autowired
+    private LoggingService loggingService;
+    
+    private final MeterRegistry meterRegistry;
+    
+    // COUNTER - Increases monotonically
+    private final Counter loginAttemptsCounter;
+    private final Counter failedLoginCounter;
+    
+    // GAUGE - Can go up and down, tracks current value
+    private final AtomicInteger activeLoginSessions = new AtomicInteger(0);
+    
+    // HISTOGRAM (implemented via Timer) - Measures distribution of values
+    private final Timer loginResponseTimeTimer;
+    
+    @Autowired
+    public AuthController(MeterRegistry meterRegistry) {
+        this.meterRegistry = meterRegistry;
+        
+        // COUNTER examples
+        this.loginAttemptsCounter = Counter.builder("auth.login.attempts.total")
+            .description("Total number of login attempts")
+            .register(meterRegistry);
+            
+        this.failedLoginCounter = Counter.builder("auth.login.failed.total")
+            .description("Total number of failed login attempts")
+            .register(meterRegistry);
+            
+        // GAUGE example - tracks current active sessions
+        Gauge.builder("auth.sessions.active", activeLoginSessions, AtomicInteger::get)
+            .description("Number of currently active login sessions")
+            .register(meterRegistry);
+            
+        // HISTOGRAM example (via Timer with histogram statistics enabled)
+        this.loginResponseTimeTimer = Timer.builder("auth.login.duration")
+            .description("Distribution of login request processing times")
+            .publishPercentiles(0.5, 0.95, 0.99)  // Publish 50th, 95th, 99th percentiles
+            .publishPercentileHistogram()         // Enable histogram
+            .sla(
+                Duration.ofMillis(10),  // 10ms SLO bucket
+                Duration.ofMillis(50),  // 50ms SLO bucket
+                Duration.ofMillis(100)  // 100ms SLO bucket
+            )
+            .register(meterRegistry);
+    }
 
     @Autowired
     private LoggingService loggingService;
@@ -163,6 +212,14 @@ public class AuthController {
         // GAUGE - Decrement active sessions on logout
         activeLoginSessions.decrementAndGet();
 
+        return "Logged out successfully";
+    }
+    
+    @PostMapping("/logout")
+    public String logout(@RequestHeader("Authorization") String authHeader) {
+        // GAUGE - Decrement active sessions on logout
+        activeLoginSessions.decrementAndGet();
+        
         return "Logged out successfully";
     }
 }
