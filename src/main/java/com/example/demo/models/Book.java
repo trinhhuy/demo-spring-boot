@@ -1,11 +1,15 @@
 package com.example.demo.models;
 
 import jakarta.persistence.*;
+
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+
 import lombok.*;
 
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
+@Builder
 @Entity
 @Table(name = "books")
 public class Book {
@@ -18,5 +22,6 @@ public class Book {
 
     @ManyToOne
     @JoinColumn(name = "user_id", nullable = false)
+    @JsonIgnoreProperties("books") // Bỏ qua danh sách books để tránh vòng lặp
     private User user;
 }
