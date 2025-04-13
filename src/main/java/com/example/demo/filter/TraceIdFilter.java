@@ -1,15 +1,13 @@
 package com.example.demo.filter;
 
-import java.io.IOException;
-
+import com.example.demo.config.TraceIdConfig;
 import jakarta.servlet.*;
 import jakarta.servlet.annotation.WebFilter;
-
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
 
-import com.example.demo.config.TraceIdConfig;
+import java.io.IOException;
 
 @Component
 @Order(Ordered.HIGHEST_PRECEDENCE)

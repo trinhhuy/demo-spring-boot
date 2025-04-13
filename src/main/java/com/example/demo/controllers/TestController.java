@@ -2,6 +2,8 @@ package com.example.demo.controllers;
 
 import java.util.concurrent.CompletableFuture;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -10,8 +12,8 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.example.demo.services.App1Service;
 import com.example.demo.services.AsyncApp1Service;
-import com.example.demo.services.LoggingService;
 import com.example.demo.services.ReactiveApp1Service;
+import com.example.demo.services.LoggingService;
 
 @RestController
 @RequestMapping("/api/test")
@@ -30,9 +32,9 @@ public class TestController {
 
     @PostMapping("/sync")
     public String sync() {
-        //        log.info("Starting sync call to app1");
+//        log.info("Starting sync call to app1");
         String response = app1Service.getHelloFromApp1();
-        //        log.info("Completed sync call to app1 with response: {}", response);
+//        log.info("Completed sync call to app1 with response: {}", response);
         return "Response from app1: " + response;
     }
 
@@ -40,18 +42,20 @@ public class TestController {
     public CompletableFuture<String> callApp1Async() {
         loggingService.logInfo("before calling");
 
-        return asyncApp1Service.callApp1Async().thenApply(response -> {
-            loggingService.logInfo("Received async response from app1 then return---");
-            return "Async response from app1: " + response;
-        });
+        return asyncApp1Service.callApp1Async()
+                .thenApply(response -> {
+                    loggingService.logInfo("Received async response from app1 then return---");
+                    return "Async response from app1: " + response;
+                });
     }
 
     @GetMapping("/call-app1-async-error")
     public CompletableFuture<String> callApp1AsyncError() {
-        return asyncApp1Service.callApp1AsyncError().thenApply(response -> {
-            loggingService.logInfo("Received async response from app1 then return---");
-            return "Async response from app1: " + response;
-        });
+        return asyncApp1Service.callApp1AsyncError()
+                .thenApply(response -> {
+                    loggingService.logInfo("Received async response from app1 then return---");
+                    return "Async response from app1: " + response;
+                });
     }
 
     @GetMapping("/fire-forget")
