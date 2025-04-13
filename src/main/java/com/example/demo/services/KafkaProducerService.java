@@ -17,15 +17,14 @@ public class KafkaProducerService {
     public void sendMessage(String message) {
         log.info("Sending message to Kafka: {}", message);
 
-        kafkaTemplate.send(TOPIC, message).whenComplete((result, ex) -> {
-            if (ex == null) {
-                log.info(
-                        "Message sent to topic {} with offset {}",
-                        TOPIC,
-                        result.getRecordMetadata().offset());
-            } else {
-                log.error("Failed to send message to Kafka", ex);
-            }
-        });
+        kafkaTemplate.send(TOPIC, message)
+            .whenComplete((result, ex) -> {
+                if (ex == null) {
+                    log.info("Message sent to topic {} with offset {}",
+                        TOPIC, result.getRecordMetadata().offset());
+                } else {
+                    log.error("Failed to send message to Kafka", ex);
+                }
+            });
     }
 }

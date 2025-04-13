@@ -1,8 +1,7 @@
 package com.example.demo.config;
 
-import java.util.UUID;
-
 import org.slf4j.MDC;
+import java.util.UUID;
 
 public class TraceIdConfig {
     public static final String TRACE_ID = "traceId";
