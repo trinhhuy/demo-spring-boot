@@ -1,11 +1,20 @@
 package com.example.demo.repositories;
 
+import java.util.Optional;
+
+import org.springframework.data.domain.*;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
+import org.springframework.stereotype.Repository;
+
 import com.example.demo.models.Book;
 import com.example.demo.models.User;
-import org.springframework.data.jpa.repository.JpaRepository;
 
-import java.util.List;
+@Repository
+public interface BookRepository extends JpaRepository<Book, Long>, JpaSpecificationExecutor<Book> {
+    Page<Book> findByUser(User user, Pageable pageable);
 
-public interface BookRepository extends JpaRepository<Book, Long> {
-    List<Book> findByUser(User user);
+    Optional<Book> findByIdAndUser(Long id, User user);
+
+    boolean existsByIdAndUser(Long id, User user);
 }

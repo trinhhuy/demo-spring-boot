@@ -9,12 +9,12 @@ import java.util.concurrent.CompletableFuture;
 @Service
 public class AsyncApp1Service {
     private final RestTemplate restTemplate;
-    
+
     @Autowired
     public AsyncApp1Service(RestTemplate restTemplate) {
         this.restTemplate = restTemplate;
     }
-    
+
     @Async
     public CompletableFuture<String> callApp1Async() {
         String result = restTemplate.getForObject("http://spring-app-1:8081/api/hello-async", String.class);

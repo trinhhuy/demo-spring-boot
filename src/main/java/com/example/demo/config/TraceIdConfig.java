@@ -17,4 +17,4 @@ public class TraceIdConfig {
     private static String generateTraceId() {
         return UUID.randomUUID().toString();
     }
-} 
+}

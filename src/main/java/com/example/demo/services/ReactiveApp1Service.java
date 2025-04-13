@@ -10,10 +10,10 @@ import reactor.core.publisher.Mono;
 @Service
 public class ReactiveApp1Service {
     private static final Logger log = LoggerFactory.getLogger(ReactiveApp1Service.class);
-    
+
     @Autowired
     private WebClient webClient;
-    
+
     public String fireAndForgetReactive() {
         // Spring Boot automatically handles trace context propagation
         webClient.get()
@@ -25,7 +25,7 @@ public class ReactiveApp1Service {
                     response -> log.info("Got response: {}", response),
                     error -> log.error("Error calling app1", error)
                 );
-        
+
         return "Request initiated via WebClient";
     }
 }

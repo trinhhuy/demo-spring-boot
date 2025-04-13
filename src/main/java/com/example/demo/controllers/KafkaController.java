@@ -16,10 +16,10 @@ import com.example.demo.services.LoggingService;
 public class KafkaController {
     @Autowired
     private LoggingService loggingService;
-    
+
     @Autowired
     private KafkaProducerService kafkaProducerService;
-    
+
     @PostMapping("/send")
     public String sendMessage(@RequestBody String message) {
         loggingService.logInfo("Received request to send message via Kafka: {}");

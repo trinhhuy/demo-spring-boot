@@ -57,7 +57,7 @@ public class TestController {
                     return "Async response from app1: " + response;
                 });
     }
-    
+
     @GetMapping("/fire-forget")
     public String fireAndForget() {
         // Start the async task but don't wait for it

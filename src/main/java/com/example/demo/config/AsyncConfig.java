@@ -21,7 +21,7 @@ public class AsyncConfig {
         executor.setTaskDecorator(runnable -> {
             return ContextSnapshot.captureAll().wrap(runnable);
         });
-        
+
         return executor;
     }
 }
