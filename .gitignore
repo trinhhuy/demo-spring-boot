@@ -34,3 +34,5 @@ build/
 mysql_data/
 logs
 logs/*
+.specstory
+.cursorindexingignore
