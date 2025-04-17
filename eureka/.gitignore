@@ -31,8 +31,3 @@ build/
 
 ### VS Code ###
 .vscode/
-mysql_data/
-logs
-logs/*
-.specstory
-.specstory/*
