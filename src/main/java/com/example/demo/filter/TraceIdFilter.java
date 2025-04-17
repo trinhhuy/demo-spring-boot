@@ -10,7 +10,7 @@ import org.springframework.stereotype.Component;
 import java.io.IOException;
 
 @Component
-@Order(Ordered.HIGHEST_PRECEDENCE)
+@Order(Ordered.LOWEST_PRECEDENCE)
 @WebFilter(filterName = "traceIdFilter", urlPatterns = "/*")
 public class TraceIdFilter implements Filter {
 

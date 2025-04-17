@@ -23,6 +23,148 @@ services:
       start_period: 20s
       timeout: 5s
 
+  postgres:
+    image: postgres:latest
+    container_name: postgres_db
+    environment:
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgres
+    networks:
+      - app-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      retries: 5
+      start_period: 10s
+
+  eureka:
+    image: openjdk:21-jdk-slim
+    container_name: eureka_server
+    restart: always
+    working_dir: /app
+    volumes:
+      - ./eureka:/app
+      - ~/.m2:/root/.m2
+    ports:
+      - "8762:8762"
+    command: [ "/bin/sh", "-c", "cd /app && ./mvnw clean spring-boot:run" ]
+    environment:
+      SERVER_PORT: 8762
+      SPRING_APPLICATION_NAME: eureka-server
+      EUREKA_INSTANCE_HOSTNAME: eureka
+    networks:
+      - app-network
+
+
+  fraud1:
+    image: openjdk:21-jdk-slim
+    container_name: fraud_service_1
+    working_dir: /app
+    volumes:
+      - ./app6:/app
+      #      - ./test-eureka-client/logs:/app/logs
+      - ~/.m2:/root/.m2
+    command: [ "/bin/sh", "-c", "cd /app && ./mvnw clean spring-boot:run" ]
+    depends_on:
+      - eureka
+      - kafka
+    environment:
+      SPRING_APPLICATION_NAME: fraud-service
+      SPRING_APPLICATION_INSTANCE_ID: instance-1
+      GRPC_SERVER_PORT: 9099
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka:8762/eureka/
+      SPRING_DATASOURCE_PASSWORD: postgres
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/postgres
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_JPA_HIBERNATE_DDL_AUTO: update
+      SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+    networks:
+      - app-network
+
+  account1:
+    image: openjdk:21-jdk-slim
+    container_name: account_service_1
+    working_dir: /app
+    volumes:
+      - ./app4:/app
+      #      - ./test-eureka-client/logs:/app/logs
+      - ~/.m2:/root/.m2
+    ports:
+      - "9091:9091"
+    command: [ "/bin/sh", "-c", "cd /app && ./mvnw clean spring-boot:run" ]
+    depends_on:
+      - eureka
+      - kafka
+    environment:
+      SPRING_APPLICATION_NAME: account-service
+      SPRING_APPLICATION_INSTANCE_ID: instance-1
+      GRPC_SERVER_PORT: 9091
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka:8762/eureka/
+      SPRING_DATASOURCE_PASSWORD: postgres
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/postgres
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_JPA_HIBERNATE_DDL_AUTO: update
+      SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+    networks:
+      - app-network
+
+  account2:
+    image: openjdk:21-jdk-slim
+    container_name: account_service_2
+    working_dir: /app
+    volumes:
+      - ./app4:/app
+      #      - ./test-eureka-client/logs:/app/logs
+      - ~/.m2:/root/.m2
+    ports:
+      - "9191:9191"
+    command: [ "/bin/sh", "-c", "cd /app && ./mvnw clean spring-boot:run" ]
+    depends_on:
+      - eureka
+      - kafka
+    environment:
+      SPRING_APPLICATION_NAME: account-service
+      SPRING_APPLICATION_INSTANCE_ID: instance-2
+      GRPC_SERVER_PORT: 9191
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka:8762/eureka/
+      SPRING_DATASOURCE_PASSWORD: postgres
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/postgres
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_JPA_HIBERNATE_DDL_AUTO: update
+      SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+    networks:
+      - app-network
+
+  transaction1:
+    image: openjdk:21-jdk-slim
+    container_name: transaction_service_1
+    working_dir: /app
+    volumes:
+      - ./app5:/app
+      #      - ./test-eureka-client/logs:/app/logs
+      - ~/.m2:/root/.m2
+    ports:
+      - "9093:9093"
+    command: [ "/bin/sh", "-c", "cd /app && ./mvnw clean spring-boot:run" ]
+    depends_on:
+      - eureka
+      - kafka
+    environment:
+      SPRING_APPLICATION_NAME: transaction-service
+      SPRING_APPLICATION_INSTANCE_ID: instance-1
+      GRPC_SERVER_PORT: 9093
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka:8762/eureka/
+      SPRING_DATASOURCE_PASSWORD: postgres
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/postgres
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_JPA_HIBERNATE_DDL_AUTO: update
+      SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+    networks:
+      - app-network
+
   app:
     image: openjdk:21-jdk-slim
     container_name: spring_app
@@ -32,6 +174,7 @@ services:
       - .:/app
       - ./logs:/app/logs
       - ./opentelemetry-javaagent.jar:/app/opentelemetry-javaagent.jar
+      - ~/.m2:/root/.m2
     ports:
       - "8080:8080"
     command: ["/bin/sh", "-c", "cd /app && ./mvnw spring-boot:run -Dspring-boot.run.jvmArguments='-javaagent:/app/opentelemetry-javaagent.jar'"]
@@ -55,6 +198,7 @@ services:
       OTEL_TRACES_EXPORTER: otlp
       OTEL_METRICS_EXPORTER: otlp
       OTEL_LOGS_EXPORTER: none
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka:8762/eureka/
     networks:
       - app-network
 
@@ -231,5 +375,6 @@ networks:
 
 volumes:
   mysql_data:
+  postgres_data:
   grafana_data:
   tempo_data:

@@ -1,0 +1,31 @@
+syntax = "proto3";
+
+package digitaldocuments.library.v1.account;
+
+message ListAccountsResponse {
+  repeated GetAccountResponse accounts = 1;
+}
+
+message ListAccountsRequest {
+  uint64 user_id = 1;
+}
+
+message GetAccountResponse {
+  uint64 id = 1;
+  uint64 user_id = 2;
+  double balance = 3;
+}
+
+message GetAccountRequest {
+  uint64 id = 1;
+}
+
+message CreateAccountResponse {
+  uint64 id = 1;
+  uint64 user_id = 2;
+  double balance = 3;
+}
+
+message CreateAccountRequest {
+  uint64 user_id = 1;
+}

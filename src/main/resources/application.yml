@@ -2,6 +2,9 @@ server:
   port: 8080
 
 spring:
+  application:
+    name: demo-spring-boot
+    instance_id: instance-1
   datasource:
     url: ${SPRING_DATASOURCE_URL}
     username: ${SPRING_DATASOURCE_USERNAME}
@@ -12,9 +15,15 @@ spring:
     properties:
       hibernate:
         dialect: org.hibernate.dialect.MySQL8Dialect
+        format_sql: true
+    open-in-view: false
+    show-sql: true
   aop:
     auto: true
     proxy-target-class: true
+  cloud:
+    discovery:
+      enabled: true
 
 logging:
   level:
@@ -36,3 +45,31 @@ logbook:
       - cardNumber
   write:
     chunk-size: 1000
+
+grpc:
+  client:
+    account-service:
+      address: 'discovery:///account-service'
+      negotiationType: plaintext
+      enableKeepAlive: true
+      keepAliveWithoutCalls: true
+    #      default-load-balancing-policy: "round_robin"
+
+    transaction-service:
+      address: 'discovery:///transaction-service'
+      negotiationType: plaintext
+      enableKeepAlive: true
+      keepAliveWithoutCalls: true
+    #      default-load-balancing-policy: "round_robin"
+
+eureka:
+  client:
+    serviceUrl:
+      defaultZone: http://localhost:8762/eureka/
+    register-with-eureka: true
+    fetch-registry: true
+    enabled: true
+    lease-renewal-interval-in-seconds: 5
+  instance:
+    prefer-ip-address: true
+    instance-id: ${spring.application.name}:${spring.application.instance_id:${random.value}}
